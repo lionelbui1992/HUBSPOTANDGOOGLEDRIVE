@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 
-export default function CreateFolderPage() {
+export default function FolderPage() {
   const router = useRouter();
   const [dealid, setDealid] = useState(null);
   const [status, setStatus] = useState('loading');
@@ -30,7 +30,7 @@ export default function CreateFolderPage() {
       return;
     }
 
-    fetch(`/api/createfolder?dealid=${finalDealid}`, {
+    fetch(`/api/folder?dealid=${finalDealid}`, {
       headers: {
         Authorization: `Bearer ${accessToken}`,
         'x-parent-id': parentid,

@@ -43,7 +43,7 @@ export default function DriveRootPicker() {
             localStorage.setItem('drive_root_folder_id', folder.id); // cần lưu vào db
 
             // 👉 Sau đó redirect sang trang tạo folder
-            router.push('/createfolder');
+            router.push('/folder');
           }
         })
         .build();

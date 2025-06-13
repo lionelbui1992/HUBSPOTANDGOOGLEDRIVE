@@ -26,7 +26,7 @@ export default function Home() {
 
       //localStorage.removeItem('pending_dealid');
       if(parentid){
-        router.push(`/createfolder?dealid=${pendingDealid}`);
+        router.push(`/folder?dealid=${pendingDealid}`);
       }else{
         router.push('/driverootpicker')
       }
