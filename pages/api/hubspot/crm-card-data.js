@@ -6,7 +6,7 @@ export default function handler(req, res) {
   res.status(200).json({
     results: [
       {
-        objectId: "card-iframe-1",
+        objectId: "123456789",
         title: "Thông tin chi tiết (iframe)",
         linkLabel: "Mở rộng",
         linkUrl: `https://gdrive.onextdigital.com/contact-card?contactId=${contactId}`,
