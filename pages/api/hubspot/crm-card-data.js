@@ -11,7 +11,7 @@ export default function handler(req, res) {
     results: [
       {
         objectId: 1,
-        title: `👤 ${firstname} ${lastname}`,
+        title: `👤 ${firstname} ${lastname} ${email}`,
         link: `https://yourdomain.com/view-contact?contactId=${contactId}`
       }
     ],
