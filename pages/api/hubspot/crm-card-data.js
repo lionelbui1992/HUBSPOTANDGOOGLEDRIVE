@@ -9,7 +9,7 @@ export default function handler(req, res) {
     hs_lead_status,
     notes_last_updated
   } = req.body;
-
+  console.log('Received from HubSpot:', req.body);
   if (!hs_object_id) {
     //return res.status(400).json({ error: "Missing hs_object_id" });
   }
