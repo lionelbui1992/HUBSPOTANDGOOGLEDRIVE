@@ -5,7 +5,7 @@ export default function handler(req, res) {
   res.status(200).json({
     results: [
       {
-        objectId: contactId,
+        objectId: '245',
         title: `📁 Google Drive Folder}`,
         link: driveUrl,
         description: `Thư mục Drive được liên kết`,
