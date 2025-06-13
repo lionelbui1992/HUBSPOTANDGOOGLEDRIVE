@@ -12,19 +12,23 @@ const SimpleSignOn = ({ children }) => {
       setCurrentURL(window.location.href);
     }
   }, [currentURL]);
- 
+
   useEffect(() => {
     const accessToken = localStorage.getItem('access_token');
-
     if (accessToken) {
       setIsAuthenticated(true);
     }
   }, []);
 
-  const handleSignOn = async () => {
+  const handleSignOn = () => {
     try {
-      // Redirect the user to the Google authorization endpoint
-      window.location.href = 'https://accounts.google.com/o/oauth2/v2/auth?access_type=offline&prompt=consent&response_type=code&client_id='+config.api.client_id+'&redirect_uri='+ currentURL +'login&scope='+config.api.scopes;
+      window.location.href =
+        'https://accounts.google.com/o/oauth2/v2/auth?access_type=offline&prompt=consent&response_type=code&client_id=' +
+        config.api.client_id +
+        '&redirect_uri=' +
+        currentURL +
+        'login&scope=' +
+        config.api.scopes;
     } catch (err) {
       setError(err);
     }
@@ -34,16 +38,15 @@ const SimpleSignOn = ({ children }) => {
     try {
       const refreshToken = localStorage.getItem('refresh_token');
       const config = localStorage.getItem('config');
-  
+
       const response = await axios.post('https://oauth2.googleapis.com/token', {
         refresh_token: refreshToken,
         client_id: config.api.client_id,
         client_secret: config.api.client_secret,
         grant_type: 'refresh_token',
       });
-  
+
       const accessToken = response.data.access_token;
-  
       localStorage.setItem('access_token', accessToken);
     } catch (err) {
       console.error(err);
@@ -51,18 +54,67 @@ const SimpleSignOn = ({ children }) => {
   };
 
   if (isAuthenticated) {
-      console.log('is authenticated')
-    return (
-      <>
-        {children}
-      </>
-    );
+    return <>{children}</>;
   }
 
+  const containerStyle = {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: '50px',
+    height: '200px',
+    backgroundColor: '#f9f9f9',
+    fontFamily: 'Segoe UI, Tahoma, Geneva, Verdana, sans-serif',
+    textAlign: 'center',
+  };
+
+  const titleStyle = {
+    fontSize: '20px',
+    fontWeight: 'bold',
+    marginBottom: '20px',
+    color: '#333',
+  };
+
+  const buttonStyle = {
+    display: 'flex',
+    alignItems: 'center',
+    padding: '12px 24px',
+    fontSize: '16px',
+    color: '#fff',
+    backgroundColor: '#4285F4',
+    border: 'none',
+    borderRadius: '4px',
+    cursor: 'pointer',
+    transition: 'background-color 0.3s ease',
+  };
+
+  const logoStyle = {
+    width: '20px',
+    height: '20px',
+    marginRight: '10px',
+    backgroundColor: '#fff',
+    borderRadius: '2px',
+    padding: '2px',
+  };
+
+  const errorStyle = {
+    color: '#d93025',
+    marginBottom: '15px',
+  };
+
   return (
-    <div>
-      {error && <div>An error occurred: {error.message}</div>}
-      <button onClick={handleSignOn}>Sign On with Google</button>
+    <div style={containerStyle}>
+      <div style={titleStyle}>Please sign on with Google to continue</div>
+      {error && <div style={errorStyle}>An error occurred: {error.message}</div>}
+      <button style={buttonStyle} onClick={handleSignOn}>
+        <img
+          style={logoStyle}
+          src="https://www.gstatic.com/images/branding/searchlogo/ico/favicon.ico"
+          alt="Google logo"
+        />
+        Sign On with Google
+      </button>
     </div>
   );
 };

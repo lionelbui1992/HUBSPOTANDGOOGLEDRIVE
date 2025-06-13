@@ -228,3 +228,37 @@
 .fileResult:nth-child(even) {
   background-color: #f4ffee;
 }
+/* styles/Home.module.css */
+
+.filesContainer {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  max-width: 800px;
+  margin: auto;
+}
+
+.fileResult {
+  margin-bottom: 12px;
+  padding: 12px 16px;
+  border: 1px solid #dcdcdc;
+  border-radius: 8px;
+  background-color: #f9f9f9;
+  transition: background-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.fileResult:hover {
+  background-color: #f1f1f1;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.fileResult a {
+  text-decoration: none;
+  color: #1a73e8;
+  font-weight: 500;
+  font-size: 16px;
+}
+
+.fileResult a:hover {
+  text-decoration: underline;
+}

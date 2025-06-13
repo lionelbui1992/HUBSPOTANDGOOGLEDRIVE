@@ -12,20 +12,12 @@ export default function Drilldown() {
   return (
     <div className={styles.container}>
       <Head>
-        <title>Create Next App</title>
+        <title>Google Drive By Onext Digital</title>
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
       <SimpleSignOn>
         <main className={styles.main}>
-
-          <HeaderImage />
-          
-          <GoogleDriveSearch />
-
-          <FolderName />
-
-          <PlayBookFolders />
 
           <PlayBookFiles />
 

@@ -6,8 +6,8 @@ import styles from '../styles/Home.module.css';
 import handleAccessTokenExpiration from "./HandleAccessTokenExpiration";
 import Link from 'next/link';
 
-const PlayBookFolders = () => {
-  const router = useRouter();
+const UploadFiles = () => {
+ const router = useRouter();
   const targetFolderId = typeof router.query.fid !== 'undefined' ? router.query.fid : config.directory.target_folder;
   const teamDriveId = config.directory.team_drive;
   const corpora = teamDriveId ? "teamDrive" : "allDrives";
@@ -93,32 +93,21 @@ const PlayBookFolders = () => {
 
   return (
     <div style={{ width: "100%", textAlign: "left" }}>
-      
-
-      {/* Folder listing */}
-      <div className={styles.grid}>
-        {results.map(result => (
-          <Link
-            href={{
-              pathname: `/list/[fid]`,
-              query: { fid: result.id },
-            }}
-            as={`/list/${result.id}`}
-            key={result.id}
-          >
-            <div
-              className={styles.card}
-              onClick={() => {
-                const container = document.querySelector('.searchContainer');
-                if (container) {
-                  container.innerHTML = '';
-                }
-              }}
-            >
-              <h3>{result.name}</h3>
-            </div>
-          </Link>
-        ))}
+     
+      {/* Upload button */}
+      <div style={{ marginBottom: "20px" }}>
+        <button
+          onClick={() => fileInputRef.current && fileInputRef.current.click()}
+          className={styles.card}
+        >
+          📁 Upload File
+        </button>
+        <input
+          type="file"
+          ref={fileInputRef}
+          style={{ display: "none" }}
+          onChange={handleFileChange}
+        />
       </div>
 
       {/* Error & loading */}
@@ -127,5 +116,6 @@ const PlayBookFolders = () => {
     </div>
   );
 };
+ 
 
-export default PlayBookFolders;
+export default UploadFiles;
