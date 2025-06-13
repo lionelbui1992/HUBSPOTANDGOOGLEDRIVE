@@ -1,12 +1,15 @@
 export default function handler(req, res) {
-  const { firstname, lastname, email } = req.body;
+  const { associatedObjectId } = req.body;
+  const contactId = Number(associatedObjectId);
 
-  const contactId = req.body.associatedObjectId || "unknown";
+  if (!contactId || isNaN(contactId)) {
+    return res.status(400).json({ error: "Invalid associatedObjectId" });
+  }
 
   res.status(200).json({
     results: [
       {
-        objectId: "123456789",
+        objectId: `${contactId}`, // phải là string, nhưng từ số
         title: "Thông tin chi tiết (iframe)",
         linkLabel: "Mở rộng",
         linkUrl: `https://gdrive.onextdigital.com/contact-card?contactId=${contactId}`,
