@@ -9,7 +9,7 @@ export default function handler(req, res) {
   res.status(200).json({
     results: [
       {
-        objectId: `${contactId}`, // phải là string, nhưng từ số
+        objectId: `686868`, // phải là string, nhưng từ số
         title: "Thông tin chi tiết (iframe)",
         linkLabel: "Mở rộng",
         linkUrl: `https://gdrive.onextdigital.com/contact-card?contactId=${contactId}`,
