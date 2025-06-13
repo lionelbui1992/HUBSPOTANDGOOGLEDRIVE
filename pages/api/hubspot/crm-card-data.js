@@ -8,19 +8,19 @@ export default function handler(req, res) {
   const dealId = hs_object_id;
 
   res.status(200).json({
-    results: [
+  "title": "New CRM Card",
+  "fetch": {
+    "targetUrl": "https://www.example.com/demo-fetch",
+    "objectTypes": [
       {
-        objectId: 245,
-        title: "📁 Google Drive Folder",
-        link: `https://gdrive.onextdigital.com/createfolder?dealid=${dealId}`,
+        "name": "contacts",
+        "propertiesToSend": [
+          "firstname",
+          "email",
+          "lastname"
+        ]
       }
-    ],
-    primaryAction: {
-      type: "IFRAME",
-      width: 890,
-      height: 748,
-      uri: `https://gdrive.onextdigital.com/createfolder?dealid=${dealId}`,
-      label: "🔐 Google Authen",
-    }
-  });
+    ]
+  }
+});
 }
