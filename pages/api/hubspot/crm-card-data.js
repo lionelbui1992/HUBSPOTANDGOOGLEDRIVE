@@ -14,12 +14,12 @@ export default function handler(req, res) {
 
   // Kiểm tra có id không
   if (!hs_object_id) {
-    return res.status(400).json({ error: "Missing hs_object_id" });
+   // return res.status(400).json({ error: "Missing hs_object_id" });
   }
 
   const contactId = hs_object_id;
   const displayName = `${firstname ?? ''} ${lastname ?? ''}`.trim() || email;
-  const driveUrl = `https://gdrive.onextdigital.com/createfolder?dealid=${contactId}`;
+  const driveUrl = `https://gdrive.onextdigital.com/createfolder`;
 
   res.status(200).json({
     results: [
