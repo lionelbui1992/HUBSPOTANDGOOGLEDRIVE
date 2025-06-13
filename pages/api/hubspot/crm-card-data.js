@@ -9,23 +9,26 @@ export default function handler(req, res) {
     hs_lead_status,
     notes_last_updated
   } = req.body;
-  console.log('Received from HubSpot:', req.body);
+
+  console.log('🔔 Received from HubSpot:', req.body);
+
+  // Kiểm tra có id không
   if (!hs_object_id) {
-    //return res.status(400).json({ error: "Missing hs_object_id" });
+    return res.status(400).json({ error: "Missing hs_object_id" });
   }
 
   const contactId = hs_object_id;
-  const displayName = `${firstname ?? ''} ${lastname ?? ''}`.trim();
+  const displayName = `${firstname ?? ''} ${lastname ?? ''}`.trim() || email;
   const driveUrl = `https://gdrive.onextdigital.com/createfolder?dealid=${contactId}`;
 
   res.status(200).json({
     results: [
       {
-        objectId: 1,
-        title: `📁 Google Drive Folder for ${displayName}`,
+        objectId: contactId,
+        title: `📁 Google Drive Folder cho ${displayName}`,
         link: driveUrl,
-        description: `Liên kết đến thư mục Drive cho liên hệ ${displayName || email}`,
-        image: "https://ssl.gstatic.com/images/branding/product/1x/drive_2020q4_48dp.png" // Google Drive icon
+        description: `Thư mục Drive được liên kết với ${displayName}`,
+        image: "https://ssl.gstatic.com/images/branding/product/1x/drive_2020q4_48dp.png"
       }
     ],
     primaryAction: {
@@ -33,7 +36,7 @@ export default function handler(req, res) {
       width: 890,
       height: 748,
       uri: driveUrl,
-      label: "🔐 Google Authen"
+      label: "🔐 Mở Google Drive"
     }
   });
 }
