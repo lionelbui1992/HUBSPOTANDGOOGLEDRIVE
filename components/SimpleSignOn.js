@@ -22,25 +22,13 @@ const SimpleSignOn = ({ children }) => {
 
   const handleSignOn = () => {
     try {
-      const googleAuthUrl = 
-        'https://accounts.google.com/o/oauth2/v2/auth' +
-        '?access_type=offline' +
-        '&prompt=consent' +
-        '&response_type=code' +
-        '&client_id=' + config.api.client_id +
-        '&redirect_uri=' + encodeURIComponent(currentURL + 'login') +
-        '&scope=' + encodeURIComponent(config.api.scopes);
-
-      const width = 500;
-      const height = 600;
-      const left = window.screenX + (window.innerWidth - width) / 2;
-      const top = window.screenY + (window.innerHeight - height) / 2;
-
-      window.open(
-        googleAuthUrl,
-        'GoogleAuthPopup',
-        `width=${width},height=${height},top=${top},left=${left}`
-      );
+      window.location.href =
+        'https://accounts.google.com/o/oauth2/v2/auth?access_type=offline&prompt=consent&response_type=code&client_id=' +
+        config.api.client_id +
+        '&redirect_uri=' +
+        currentURL +
+        'login&scope=' +
+        config.api.scopes;
     } catch (err) {
       setError(err);
     }
