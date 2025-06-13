@@ -1,15 +1,32 @@
 export default function handler(req, res) {
+  const { associatedObjectId } = req.body;
+
+  // Kiểm tra và xử lý nếu cần
+  if (!associatedObjectId) {
+    return res.status(400).json({ error: "Missing associatedObjectId" });
+  }
+
+  // Trả về JSON định dạng HubSpot yêu cầu
   res.status(200).json({
-    title: "Custom Iframe Card",
-    results: [
-      {
-        type: "IFRAME",
-        width: 890,
-        height: 748,
-        uri: "https://gdrive.onextdigital.com/contact-card",
-        label: "Edit",
-        associatedObjectProperties: ["some_crm_property"]
-      }
-    ]
+    title: "Thông tin khách hàng",
+    display: {
+      properties: [
+        {
+          label: "Mã khách hàng",
+          dataType: "STRING",
+          value: associatedObjectId
+        }
+      ],
+      actions: [
+        {
+          type: "IFRAME",
+          width: 800,
+          height: 600,
+          uri: `https://gdrive.onextdigital.com/contact-card/${associatedObjectId}`,
+          label: "Xem chi tiết",
+          associatedObjectProperties: ["email", "firstname"]
+        }
+      ]
+    }
   });
 }
