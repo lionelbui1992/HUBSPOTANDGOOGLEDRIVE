@@ -11,7 +11,7 @@ export default function handler(req, res) {
   } = req.body;
 
   if (!hs_object_id) {
-    return res.status(400).json({ error: "Missing hs_object_id" });
+    //return res.status(400).json({ error: "Missing hs_object_id" });
   }
 
   const contactId = hs_object_id;
