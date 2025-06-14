@@ -45,7 +45,7 @@ export default async function handler(req, res) {
           extraItems.push({
             objectId: '9702',
             title: 'Upload File',
-            link: `https://gdrive.onextdigital.com/upload?folder=${folderId}`,
+            link: `https://gdrive.onextdigital.com/upload/folder=${associatedObjectId}`,
           });
         }
         // 2. Lấy danh sách file trong folder đó
