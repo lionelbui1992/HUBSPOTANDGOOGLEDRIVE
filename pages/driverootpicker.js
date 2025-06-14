@@ -2,20 +2,25 @@ import { useEffect } from 'react';
 import { useRouter } from 'next/router';
 import styles from '../styles/Home.module.css'
 import Head from 'next/head'
+import fs from 'fs';
+import path from 'path';
 
 export default function DriveRootPicker() {
   const router = useRouter();
 
   useEffect(() => {
-    const savedFolderId = localStorage.getItem('drive_root_folder_id');
-    if (savedFolderId) {
-      // 👇 Nếu đã có folder ID → chuyển sang trang tạo folder
-      router.push('/creatfolder');
-      return;
+    
+    const dbPath = path.join(process.cwd(), 'pages', 'database.json');
+    let access_token = null;
+  
+    try {
+      const tokenRaw = fs.readFileSync(dbPath, 'utf-8');
+      const tokenData = JSON.parse(tokenRaw);
+      access_token = tokenData.access_token;
+    } catch (err) {
+      console.error('Failed to read token:', err.message);
     }
-
-    const accessToken = localStorage.getItem('access_token');
-    if (!accessToken) {
+    if (!access_token) {
       alert("Không có access_token. Vui lòng đăng nhập trước.");
       return;
     }

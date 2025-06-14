@@ -19,11 +19,7 @@ export default function TokenReceivedPage() {
         expires_at: expiryTime,
       };
 
-      // ✅ Lưu token vào localStorage
-      localStorage.setItem("hubspotAuth", JSON.stringify(authData));
-
-      // ✅ Chuyển hướng sang trang tạo contact
-      router.replace("/create-contact");
+      router.replace("/driverootpicker");
     }
   }, [router]);
 
