@@ -54,7 +54,7 @@ export default function handler(req, res) {
         {
           "objectId": 456,
           "title": "Authencation",
-          "link": "https://gdrive.onextdigital.com/gdrive/auth",
+          "link": "http://example.com/2",
         },
         {
           "objectId": 789,
