@@ -1,59 +1,60 @@
-import Head from 'next/head'
-import React, { useEffect, useState } from 'react';
-import { useRouter } from 'next/router';
-import styles from '../styles/Home.module.css'
-import HeaderImage from '../components/HeaderImage';
-import GoogleDriveSearch from '../components/GoogleDriveSearch'
-import SimpleSignOn from '../components/SimpleSignOn'
-import PlayBookFolders from '../components/PlayBookFolders';
+import React, { useState ,useEffect } from 'react';
+import Router from 'next/router'
+import axios from 'axios';
 
-export default function Home() {
-  const router = useRouter();
+
+var config = require('../config.json');
+
+const handleRedirect = async (code , currentURL = "") => {
+
+    const redirectUri = currentURL.replace(/\/login.*/, "/login");
+
+    try {
+      console.log(currentURL)
+        const response = await axios.post('https://oauth2.googleapis.com/token', {
+            code: code,
+            client_id: config.api.client_id,
+            client_secret: config.api.client_secret,
+            redirect_uri: redirectUri,
+            grant_type: 'authorization_code',
+        });
+
+        //console.log('response')
+        //console.log(response.data)
+
+        const accessToken = response.data.access_token;
+        const refreshToken = response.data.refresh_token;
+
+        localStorage.setItem('code', code);
+        localStorage.setItem('access_token', accessToken);
+        localStorage.setItem('refresh_token', refreshToken);
+        Router.push('/')
+    } catch (err) {
+        alert(err);
+    }
+};
+
+
+const Page = ({ code }) => {
+  
+  var config = require('../config.json');
+  const [currentURL, setCurrentURL] = useState(null);
 
   useEffect(() => {
-    const accessToken = localStorage.getItem('access_token');
-    const pendingDealid = localStorage.getItem('pending_dealid');
-    const parentid = localStorage.getItem('drive_root_folder_id'); // lấy từ database ra
-    if (!accessToken) {
-      // 👉 Lưu dealid để dùng lại sau khi đăng nhập
-      localStorage.setItem('pending_dealid', pendingDealid);
-      router.push('/'); // Redirect to login page
-      return;
+    setCurrentURL(window.location.href);
+  }, [])
+
+  useEffect(() => {
+    if (currentURL) {
+      handleRedirect(code , currentURL)
     }
-    // Nếu có pending dealid, chuyển hướng đến trang tạo folder
-    
-    if (pendingDealid) {
+  }, [currentURL])
 
-      //localStorage.removeItem('pending_dealid');
-      if(parentid){
-        router.push(`/folder?dealid=${pendingDealid}`);
-      }else{
-        router.push('/driverootpicker')
-      }
-    } else {
-      router.push('/');
-    }
-
-  }, []);
-
-  return (
-     <div className={styles.container}>
-      <Head>
-        <title>Google Drive By Onext Digital</title>
-        <link rel="icon" href="/favicon.ico" />
-      </Head>
-
-      <SimpleSignOn>
-        <main className={styles.main}>
-          <h1>🔐 Processing login...</h1>
-        </main>
-
-        <footer className={styles.footer}>
-          
-        </footer>
-      
-      </SimpleSignOn>
-    </div>
-      
-  );
+  return <div>Redirecting...</div>
 }
+
+Page.getInitialProps = async ({ query }) => {
+  return { code: query.code }
+}
+
+export default Page
