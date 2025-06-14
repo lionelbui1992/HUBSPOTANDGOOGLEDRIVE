@@ -45,11 +45,11 @@ export default function DrivePicker() {
           if (data.action === google.picker.Action.PICKED) {
             const folder = data.docs[0];
             alert(`✅ Đã chọn thư mục: ${folder.name}`);
-            localStorage.setItem('drive_root_folder_id', folder.id);
-            router.push('/folder');
+            localStorage.setItem('drive_root_folder_id', folder.id);// lưu vào db
+            router.push('/authsuccess');
           } else if (data.action === google.picker.Action.CANCEL) {
             alert('❌ Đã hủy chọn thư mục');
-            router.push('/');
+            router.push('/install');
           }
         })
         .build();
