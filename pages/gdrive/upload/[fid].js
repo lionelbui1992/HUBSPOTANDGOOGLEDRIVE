@@ -1,90 +1,87 @@
-import { useRouter } from 'next/router';
-import { useState } from 'react';
+import fs from 'fs';
+import path from 'path';
+import axios from 'axios';
 
-export default function UploadPage() {
-  const router = useRouter();
-  const { fid } = router.query;
-  const [file, setFile] = useState(null);
-  const [message, setMessage] = useState('');
-  const [loading, setLoading] = useState(false);
+export async function getServerSideProps(context) {
+  const { fid } = context.params;
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!file) return;
+  const dbPath = path.join(process.cwd(), 'pages', 'database.json');
+  const configPath = path.join(process.cwd(), 'config.json');
 
-    setLoading(true);
-    setMessage('');
+  let access_token = null;
+  let rootFolderId = null;
 
-    const formData = new FormData();
-    formData.append('file', file);
+  // Đọc access_token từ database.json
+  try {
+    const tokenRaw = fs.readFileSync(dbPath, 'utf-8');
+    const tokenData = JSON.parse(tokenRaw);
+    access_token = tokenData.access_token;
+  } catch (err) {
+    console.error('❌ Không đọc được access_token:', err.message);
+    return { notFound: true };
+  }
 
-    try {
-      const res = await fetch(`/api/gdrive/upload/${fid}`, {
-        method: 'POST',
-        body: formData,
-      });
+  // Đọc target_folder từ config.json
+  try {
+    const configRaw = fs.readFileSync(configPath, 'utf-8');
+    const config = JSON.parse(configRaw);
+    rootFolderId = config.directory.target_folder;
+  } catch (err) {
+    console.error('❌ Không đọc được config:', err.message);
+    return { notFound: true };
+  }
 
-      const data = await res.json();
-      if (res.ok) {
-        setMessage(`✅ Upload thành công: ${data.name}`);
-      } else {
-        setMessage(`❌ Upload thất bại: ${data.error || 'Unknown error'}`);
-      }
-    } catch (err) {
-      setMessage(`❌ Lỗi mạng: ${err.message}`);
-    } finally {
-      setLoading(false);
-    }
+  const headers = {
+    Authorization: `Bearer ${access_token}`
   };
 
-  return (
-    <div style={{ maxWidth: '600px', margin: '40px auto', padding: '20px', border: '1px solid #ccc', borderRadius: '8px', fontFamily: 'Arial, sans-serif' }}>
-      <h2>Upload file vào folder <code>{fid}</code></h2>
+  try {
+    // Tìm folder con có tên là fid trong rootFolderId
+    const searchRes = await axios.get('https://www.googleapis.com/drive/v3/files', {
+      headers,
+      params: {
+        q: `'${rootFolderId}' in parents and name='${fid}' and mimeType='application/vnd.google-apps.folder' and trashed = false`,
+        fields: 'files(id, name)'
+      }
+    });
 
-      <form onSubmit={handleSubmit} encType="multipart/form-data">
-        <input
-          type="file"
-          name="file"
-          onChange={(e) => setFile(e.target.files[0])}
-          required
-        />
-        <br /><br />
-        <button type="submit" disabled={loading} style={{ padding: '10px 20px' }}>
-          {loading ? 'Đang tải lên...' : 'Tải lên'}
-        </button>
-      </form>
+    let folderId;
 
-      {loading && (
-        <div style={{ marginTop: '20px' }}>
-          <div style={{
-            height: '6px',
-            width: '100%',
-            backgroundColor: '#eee',
-            borderRadius: '3px',
-            overflow: 'hidden'
-          }}>
-            <div style={{
-              height: '100%',
-              width: '100%',
-              backgroundColor: '#4caf50',
-              animation: 'loadingBar 1.2s linear infinite'
-            }} />
-          </div>
-          <style jsx>{`
-            @keyframes loadingBar {
-              0% { transform: translateX(-100%); }
-              50% { transform: translateX(-50%); }
-              100% { transform: translateX(100%); }
-            }
-          `}</style>
-        </div>
-      )}
+    if (searchRes.data.files.length > 0) {
+      // Folder đã tồn tại
+      folderId = searchRes.data.files[0].id;
+    } else {
+      // Chưa có → tạo mới folder
+      const createRes = await axios.post(
+        'https://www.googleapis.com/drive/v3/files',
+        {
+          name: fid,
+          mimeType: 'application/vnd.google-apps.folder',
+          parents: [rootFolderId]
+        },
+        {
+          headers: {
+            ...headers,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+      folderId = createRes.data.id;
+    }
 
-      {message && (
-        <div style={{ marginTop: '20px', color: message.startsWith('✅') ? 'green' : 'red' }}>
-          {message}
-        </div>
-      )}
-    </div>
-  );
+    // Redirect đến folder trên Google Drive
+    return {
+      redirect: {
+        destination: `https://drive.google.com/drive/folders/${folderId}`,
+        permanent: false
+      }
+    };
+  } catch (err) {
+    console.error('❌ Lỗi khi xử lý thư mục:', err.message);
+    return { notFound: true };
+  }
+}
+
+export default function RedirectPage() {
+  return <div>Đang chuyển hướng đến Google Drive...</div>;
 }
