@@ -1,16 +1,8 @@
 export default function handler(req, res) {
   const {
-    associatedObjectId,
-    associatedObjectType,
-    firstname,
-    lastname,
-    email,
-    userId,
-    userEmail,
-    portalId
+    associatedObjectId
   } = req.query;
 
-  const displayName = `${firstname ?? ''} ${lastname ?? ''}`.trim();
   const driveUrl = `https://gdrive.onextdigital.com/folder?dealid=${associatedObjectId}`;
 
   res.status(200).json({
@@ -54,7 +46,7 @@ export default function handler(req, res) {
         {
           "objectId": 456,
           "title": "Authencation",
-          "link": "http://example.com/2",
+          "link": "https://gdrive.onextdigital.com/auth",
         },
         {
           "objectId": 789,
