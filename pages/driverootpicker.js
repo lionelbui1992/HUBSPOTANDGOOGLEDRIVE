@@ -49,7 +49,7 @@ export default function DrivePicker() {
             router.push('/authsuccess');
           } else if (data.action === google.picker.Action.CANCEL) {
             alert('❌ Đã hủy chọn thư mục');
-            router.push('/install');
+            router.push('/driverootpicker');
           }
         })
         .build();
