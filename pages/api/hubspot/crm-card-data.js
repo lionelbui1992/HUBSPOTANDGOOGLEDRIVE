@@ -12,16 +12,7 @@ export default function handler(req, res) {
 
   const displayName = `${firstname ?? ''} ${lastname ?? ''}`.trim();
   const driveUrl = `https://gdrive.onextdigital.com/folder?dealid=${associatedObjectId}`;
- const token = localStorage.getItem("access_token"); // hoặc từ OAuth redirect
- const associatedObjectId = associatedObjectId
 
-const res = await fetch(`/api/gdrive/files?associatedObjectId=${associatedObjectId}`, {
-  headers: {
-    Authorization: `Bearer ${token}`
-  }
-});
-
-const data = await res.json();
   res.status(200).json({
     "results": [
         {
