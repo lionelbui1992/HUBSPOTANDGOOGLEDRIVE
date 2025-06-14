@@ -13,10 +13,9 @@ export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
   const { fid } = req.query;
+  const ROOT_FOLDER_ID = '1oxHdtoTyOpUO4CXAUTQ1a6mdvZGKem6b';
 
-  const ROOT_FOLDER_ID = '1oxHdtoTyOpUO4CXAUTQ1a6mdvZGKem6b'; // Thư mục gốc theo yêu cầu
-
-  // Đọc access_token từ database.json
+  // 1. Đọc access_token từ database.json
   const dbPath = path.join(process.cwd(), 'pages', 'database.json');
   let access_token;
   try {
@@ -27,17 +26,16 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: 'Access token not found' });
   }
 
-  // Parse multipart/form-data để lấy file upload
+  // 2. Parse file upload
   const form = new formidable.IncomingForm({ keepExtensions: true });
 
   form.parse(req, async (err, fields, files) => {
     if (err) {
-      console.error('Formidable parse error:', err);
+      console.error('Form parse error:', err);
       return res.status(400).json({ error: 'File upload error' });
     }
 
     const file = files.file;
-
     if (!file || !file.filepath) {
       return res.status(400).json({ error: 'No file uploaded' });
     }
@@ -45,27 +43,25 @@ export default async function handler(req, res) {
     try {
       const fetch = (await import('node-fetch')).default;
 
-      let folderId = null;
+      // 3. Kiểm tra folder tồn tại
+      const findFolderUrl = `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(
+        `mimeType='application/vnd.google-apps.folder' and name='${fid}' and '${ROOT_FOLDER_ID}' in parents and trashed=false`
+      )}&fields=files(id,name)`;
 
-      // Tìm folder theo tên trong thư mục gốc
-      const folderSearch = await fetch(
-        `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(
-          `mimeType='application/vnd.google-apps.folder' and name='${fid}' and '${ROOT_FOLDER_ID}' in parents and trashed=false`
-        )}&fields=files(id,name)`,
-        {
-          headers: {
-            Authorization: `Bearer ${access_token}`,
-          },
-        }
-      );
+      const folderRes = await fetch(findFolderUrl, {
+        headers: {
+          Authorization: `Bearer ${access_token}`,
+        },
+      });
 
-      const folderResult = await folderSearch.json();
+      const folderJson = await folderRes.json();
 
-      if (folderResult.files && folderResult.files.length > 0) {
-        folderId = folderResult.files[0].id;
+      let folderId;
+      if (folderJson.files && folderJson.files.length > 0) {
+        folderId = folderJson.files[0].id;
       } else {
-        // Nếu chưa có thì tạo folder mới
-        const createFolder = await fetch('https://www.googleapis.com/drive/v3/files', {
+        // 4. Nếu chưa có thì tạo folder mới
+        const createFolderRes = await fetch('https://www.googleapis.com/drive/v3/files', {
           method: 'POST',
           headers: {
             Authorization: `Bearer ${access_token}`,
@@ -78,11 +74,11 @@ export default async function handler(req, res) {
           }),
         });
 
-        const newFolder = await createFolder.json();
+        const newFolder = await createFolderRes.json();
         folderId = newFolder.id;
       }
 
-      // Upload file vào folder
+      // 5. Chuẩn bị upload file
       const fileStream = fs.createReadStream(file.filepath);
       const metadata = {
         name: file.originalFilename,
@@ -110,17 +106,15 @@ export default async function handler(req, res) {
         bodyStream.end(endBody);
       });
 
-      const uploadRes = await fetch(
-        'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart',
-        {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${access_token}`,
-            'Content-Type': `multipart/related; boundary=${boundary}`,
-          },
-          body: bodyStream,
-        }
-      );
+      // 6. Upload
+      const uploadRes = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${access_token}`,
+          'Content-Type': `multipart/related; boundary=${boundary}`,
+        },
+        body: bodyStream,
+      });
 
       const uploadData = await uploadRes.json();
 
@@ -128,15 +122,10 @@ export default async function handler(req, res) {
         return res.status(uploadRes.status).json({ error: uploadData.error || 'Upload failed' });
       }
 
-      return res.status(200).json({
-        success: true,
-        fileId: uploadData.id,
-        name: uploadData.name,
-        folderId,
-      });
-    } catch (err) {
-      console.error('Upload error:', err.message);
-      return res.status(500).json({ error: 'Upload failed' });
+      res.status(200).json({ success: true, fileId: uploadData.id, name: uploadData.name });
+    } catch (e) {
+      console.error('Upload error:', e.message);
+      res.status(500).json({ error: 'Upload failed' });
     }
   });
 }
