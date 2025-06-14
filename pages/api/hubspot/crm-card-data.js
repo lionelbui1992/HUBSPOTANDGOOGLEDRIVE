@@ -1,73 +1,90 @@
 import fs from 'fs';
 import path from 'path';
-import axios from 'axios';
 
 export default async function handler(req, res) {
   const { associatedObjectId } = req.query;
-  const dbPath = path.join(process.cwd(), 'pages', 'database.json');
 
-  let access_token;
+  const dbPath = path.join(process.cwd(), 'pages', 'database.json');
+  let access_token = null;
 
   try {
-    const tokenData = JSON.parse(fs.readFileSync(dbPath, 'utf-8'));
+    const tokenRaw = fs.readFileSync(dbPath, 'utf-8');
+    const tokenData = JSON.parse(tokenRaw);
     access_token = tokenData.access_token;
   } catch (err) {
-    return res.status(500).json({ error: 'Không đọc được access token' });
+    console.error('Failed to read token:', err.message);
   }
 
-  try {
-    // Bước 1: Tìm folderId từ tên folder
-    const folderSearch = await axios.get('https://www.googleapis.com/drive/v3/files', {
-      headers: {
-        Authorization: `Bearer ${access_token}`,
-      },
-      params: {
-        q: `name='${associatedObjectId}' and mimeType='application/vnd.google-apps.folder' and trashed=false`,
-        fields: 'files(id, name)',
-      },
-    });
-
-    const folders = folderSearch.data.files;
-    if (!folders.length) {
-      return res.status(404).json({ error: `Không tìm thấy folder tên "${associatedObjectId}"` });
-    }
-
-    const folderId = folders[0].id;
-
-    // Bước 2: Lấy danh sách file trong folder
-    const fileList = await axios.get('https://www.googleapis.com/drive/v3/files', {
-      headers: {
-        Authorization: `Bearer ${access_token}`,
-      },
-      params: {
-        q: `'${folderId}' in parents and trashed=false`,
-        fields: 'files(id, name, mimeType, createdTime, webViewLink)',
-      },
-    });
-
-    const results = fileList.data.files.map((file) => ({
-      objectId: file.id,
-      title: file.name,
-      link: file.webViewLink,
-      created: file.createdTime,
-      actions: [
+  let files = [];
+  // 3. Luôn luôn có nút Authentication
+      const extraItems = [
         {
-          type: 'CONFIRMATION_ACTION_HOOK',
-          confirmationMessage: 'Are you sure you want to delete this file?',
-          confirmButtonText: 'Yes',
-          cancelButtonText: 'No',
-          httpMethod: 'DELETE',
-          associatedObjectProperties: ['protected_account'],
-          uri: `https://gdrive.onextdigital.com/api/gdrive/deletefile/${file.id}`,
-          label: 'Delete',
+          objectId: 'auth',
+          title: 'Authentication',
+          link: 'https://gdrive.onextdigital.com/auth',
         },
-      ],
-    }));
+      ];
+  if (access_token) {
+    try {
+      // 1. Tìm folder ID theo tên
+      const folderListResp = await fetch(
+        `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(`mimeType='application/vnd.google-apps.folder' and name='330472910073' and trashed=false`)}&fields=files(id,name)`,
+        {
+          headers: {
+            Authorization: `Bearer ${access_token}`,
+          },
+        }
+      );
 
-    return res.status(200).json({ results });
+      const folderData = await folderListResp.json();
 
-  } catch (err) {
-    console.error('Lỗi khi truy xuất Google Drive:', err.response?.data || err.message);
-    return res.status(500).json({ error: 'Không thể truy xuất file từ Google Drive' });
+      if (folderData.files && folderData.files.length > 0) {
+        const folderId = folderData.files[0].id || '1MYkrwT-QTV3jdc-DSlFkmqxj__XO4Hkt';
+        // 4. Nếu có token => thêm nút Upload
+        if (access_token) {
+          extraItems.push({
+            objectId: 'upload',
+            title: 'Upload File',
+            link: `https://gdrive.onextdigital.com/upload?folder=${folderId}`,
+          });
+        }
+        // 2. Lấy danh sách file trong folder đó
+        const fileListResp = await fetch(
+          `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(`'${folderId}' in parents and trashed=false`)}&fields=files(id,name,webViewLink,createdTime)&orderBy=createdTime desc`,
+          {
+            headers: {
+              Authorization: `Bearer ${access_token}`,
+            },
+          }
+        );
+
+        const fileListData = await fileListResp.json();
+
+        files = (fileListData.files || []).map((file) => ({
+          objectId: file.id,
+          title: file.name,
+          link: file.webViewLink,
+          created: file.createdTime,
+          actions: [
+            {
+              type: 'CONFIRMATION_ACTION_HOOK',
+              confirmationMessage: 'Are you sure you want to delete this file?',
+              confirmButtonText: 'Yes',
+              cancelButtonText: 'No',
+              httpMethod: 'DELETE',
+              associatedObjectProperties: ['protected_account'],
+              uri: `https://gdrive.onextdigital.com/api/gdrive/deletefile/${file.id}`,
+              label: 'Delete',
+            },
+          ],
+        }));
+      }
+    } catch (err) {
+      console.error('Google Drive API error:', err.message);
+    }
   }
+
+  res.status(200).json({
+    results: [...files, ...extraItems],
+  });
 }
