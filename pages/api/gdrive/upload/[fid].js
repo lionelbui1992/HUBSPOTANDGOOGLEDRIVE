@@ -14,6 +14,8 @@ export default async function handler(req, res) {
 
   const { fid } = req.query;
 
+  const ROOT_FOLDER_ID = '1oxHdtoTyOpUO4CXAUTQ1a6mdvZGKem6b'; // Thư mục gốc theo yêu cầu
+
   // Đọc access_token từ database.json
   const dbPath = path.join(process.cwd(), 'pages', 'database.json');
   let access_token;
@@ -41,10 +43,50 @@ export default async function handler(req, res) {
     }
 
     try {
+      const fetch = (await import('node-fetch')).default;
+
+      let folderId = null;
+
+      // Tìm folder theo tên trong thư mục gốc
+      const folderSearch = await fetch(
+        `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(
+          `mimeType='application/vnd.google-apps.folder' and name='${fid}' and '${ROOT_FOLDER_ID}' in parents and trashed=false`
+        )}&fields=files(id,name)`,
+        {
+          headers: {
+            Authorization: `Bearer ${access_token}`,
+          },
+        }
+      );
+
+      const folderResult = await folderSearch.json();
+
+      if (folderResult.files && folderResult.files.length > 0) {
+        folderId = folderResult.files[0].id;
+      } else {
+        // Nếu chưa có thì tạo folder mới
+        const createFolder = await fetch('https://www.googleapis.com/drive/v3/files', {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${access_token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            name: fid,
+            mimeType: 'application/vnd.google-apps.folder',
+            parents: [ROOT_FOLDER_ID],
+          }),
+        });
+
+        const newFolder = await createFolder.json();
+        folderId = newFolder.id;
+      }
+
+      // Upload file vào folder
       const fileStream = fs.createReadStream(file.filepath);
       const metadata = {
         name: file.originalFilename,
-        parents: [fid],
+        parents: [folderId],
       };
 
       const boundary = 'foo_bar_baz';
@@ -60,10 +102,7 @@ export default async function handler(req, res) {
 
       const endBody = closeDelimiter;
 
-      // Create a full multipart stream
-      const fetch = (await import('node-fetch')).default;
       const { PassThrough } = await import('stream');
-
       const bodyStream = new PassThrough();
       bodyStream.write(multipartBody);
       fileStream.pipe(bodyStream, { end: false });
@@ -71,14 +110,17 @@ export default async function handler(req, res) {
         bodyStream.end(endBody);
       });
 
-      const uploadRes = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${access_token}`,
-          'Content-Type': `multipart/related; boundary=${boundary}`,
-        },
-        body: bodyStream,
-      });
+      const uploadRes = await fetch(
+        'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart',
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${access_token}`,
+            'Content-Type': `multipart/related; boundary=${boundary}`,
+          },
+          body: bodyStream,
+        }
+      );
 
       const uploadData = await uploadRes.json();
 
@@ -86,10 +128,15 @@ export default async function handler(req, res) {
         return res.status(uploadRes.status).json({ error: uploadData.error || 'Upload failed' });
       }
 
-      res.status(200).json({ success: true, fileId: uploadData.id, name: uploadData.name });
+      return res.status(200).json({
+        success: true,
+        fileId: uploadData.id,
+        name: uploadData.name,
+        folderId,
+      });
     } catch (err) {
       console.error('Upload error:', err.message);
-      res.status(500).json({ error: 'Upload failed' });
+      return res.status(500).json({ error: 'Upload failed' });
     }
   });
 }

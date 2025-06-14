@@ -17,8 +17,7 @@ export default async function handler(req, res) {
 
   let files = [];
   // 3. Luôn luôn có nút Authentication
-      const extraItems = [];
-       extraItems.push = [
+      const extraItems = [
         {
           objectId: '9701',
           title: 'Authentication',
@@ -46,7 +45,7 @@ export default async function handler(req, res) {
           extraItems.push({
             objectId: '9702',
             title: 'Upload File',
-            link: `https://gdrive.onextdigital.com/upload/${associatedObjectId}`,
+            link: `https://gdrive.onextdigital.com/gdrive/upload/${associatedObjectId}`,
           });
         }
         // 2. Lấy danh sách file trong folder đó
