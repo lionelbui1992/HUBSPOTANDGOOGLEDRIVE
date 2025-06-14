@@ -39,12 +39,12 @@ export default async function handler(req, res) {
       const folderData = await folderListResp.json();
 
       if (folderData.files && folderData.files.length > 0) {
-        const folderId = folderData.files[0].id || '1MYkrwT-QTV3jdc-DSlFkmqxj__XO4Hkt';
+        const folderId = folderData.files[0].id ;
         // 4. Nếu có token => thêm nút Upload
         if (access_token) {
           extraItems.push({
             objectId: '9702',
-            title: 'Upload File',
+            title: 'Google Drive Directory',
             link: `https://gdrive.onextdigital.com/gdrive/upload/${associatedObjectId}`,
           });
         }
@@ -65,18 +65,18 @@ export default async function handler(req, res) {
           title: file.name,
           link: file.webViewLink,
           created: file.createdTime,
-          actions: [
-            {
-              type: 'CONFIRMATION_ACTION_HOOK',
-              confirmationMessage: 'Are you sure you want to delete this file?',
-              confirmButtonText: 'Yes',
-              cancelButtonText: 'No',
-              httpMethod: 'DELETE',
-              associatedObjectProperties: ['protected_account'],
-              uri: `https://gdrive.onextdigital.com/api/gdrive/deletefile/${file.id}`,
-              label: 'Delete',
-            },
-          ],
+          // actions: [
+          //   {
+          //     type: 'CONFIRMATION_ACTION_HOOK',
+          //     confirmationMessage: 'Are you sure you want to delete this file?',
+          //     confirmButtonText: 'Yes',
+          //     cancelButtonText: 'No',
+          //     httpMethod: 'DELETE',
+          //     associatedObjectProperties: ['protected_account'],
+          //     uri: `https://gdrive.onextdigital.com/api/gdrive/deletefile/${file.id}`,
+          //     label: 'Delete',
+          //   },
+          // ],
         }));
       }
     } catch (err) {
