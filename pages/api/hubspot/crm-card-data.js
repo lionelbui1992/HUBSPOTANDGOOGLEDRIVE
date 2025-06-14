@@ -17,7 +17,8 @@ export default async function handler(req, res) {
 
   let files = [];
   // 3. Luôn luôn có nút Authentication
-      const extraItems = [
+      const extraItems = [];
+       extraItems.push = [
         {
           objectId: '9701',
           title: 'Authentication',
