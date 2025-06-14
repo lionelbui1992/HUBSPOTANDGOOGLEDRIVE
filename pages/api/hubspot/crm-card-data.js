@@ -19,7 +19,7 @@ export default async function handler(req, res) {
   // 3. Luôn luôn có nút Authentication
       const extraItems = [
         {
-          objectId: 'auth',
+          objectId: '9701',
           title: 'Authentication',
           link: 'https://gdrive.onextdigital.com/auth',
         },
@@ -43,7 +43,7 @@ export default async function handler(req, res) {
         // 4. Nếu có token => thêm nút Upload
         if (access_token) {
           extraItems.push({
-            objectId: 'upload',
+            objectId: '9702',
             title: 'Upload File',
             link: `https://gdrive.onextdigital.com/upload?folder=${folderId}`,
           });
@@ -60,8 +60,8 @@ export default async function handler(req, res) {
 
         const fileListData = await fileListResp.json();
 
-        files = (fileListData.files || []).map((file) => ({
-          objectId: file.id,
+        files = (fileListData.files || []).map((file, index) => ({
+         objectId: '98'+ index + 1,
           title: file.name,
           link: file.webViewLink,
           created: file.createdTime,
