@@ -17,17 +17,13 @@ const router = useRouter();
         <title>Google Drive By Onext Digital</title>
         <link rel="icon" href="/favicon.ico" />
       </Head>
-
-      <SimpleSignOn>
         <main className={styles.main}>
-          <h1>🔐 Processing login...</h1>
+          <h1>Authenticated!</h1>
         </main>
 
         <footer className={styles.footer}>
           
         </footer>
-      
-      </SimpleSignOn>
     </div>
       
   );

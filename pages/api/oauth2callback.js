@@ -10,7 +10,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    const redirectUri = 'https://gdrive.onextdigital.com/api/oauth2callback';
+    const redirectUri = config.api.redirect_url;
 
     const response = await axios.post('https://oauth2.googleapis.com/token', null, {
       params: {
@@ -25,11 +25,11 @@ export default async function handler(req, res) {
       },
     });
 
-    const { access_token, refresh_token, expires_in, token_type } = response.data;
+    const { access_token, refresh_token, expires_in, token_type } = response.data; //lưu vào db
 
     // ✅ Lưu token vào đâu đó (session, database hoặc localStorage client nếu redirect)
     // Tạm thời redirect với token để debug:
-    const redirectClient = 'https://gdrive.onextdigital.com/'; // hoặc frontend URL
+    const redirectClient = '/authsuccess'; // hoặc frontend URL
     const tokenUrl = `${redirectClient}?access_token=${access_token}&refresh_token=${refresh_token}`;
     res.redirect(tokenUrl);
 

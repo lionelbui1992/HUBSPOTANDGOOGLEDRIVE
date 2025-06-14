@@ -26,8 +26,8 @@ const SimpleSignOn = ({ children }) => {
         'https://accounts.google.com/o/oauth2/v2/auth?access_type=offline&prompt=consent&response_type=code&client_id=' +
         config.api.client_id +
         '&redirect_uri=' +
-        currentURL +
-        'login&scope=' +
+       config.api.redirect_url +
+        '&scope=' +
         config.api.scopes;
     } catch (err) {
       setError(err);
