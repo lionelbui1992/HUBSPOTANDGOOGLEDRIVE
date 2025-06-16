@@ -44,11 +44,12 @@ export default async function handler(req, res) {
       });
     }
 
-    // ✅ Tùy chọn: lưu accessToken và userInfo vào DB tại đây nếu cần
+    // 👉 Thêm ngày giờ cài đặt (ISO string)
+    const installDate = new Date().toISOString();
 
-    // ✅ Chuyển hướng về frontend, có thể gửi dữ liệu qua query hoặc lưu session
+    // ✅ Redirect về trang thành công, có kèm ngày cài đặt
     return res.redirect(
-      `/driverootpicker?hub_id=${userInfo.hub_id}&user=${encodeURIComponent(userInfo.user)}`
+      `/installedsuccess?hub_id=${userInfo.hub_id}&user=${encodeURIComponent(userInfo.user)}&install_date=${encodeURIComponent(installDate)}`
     );
   } catch (err) {
     return res.status(500).json({

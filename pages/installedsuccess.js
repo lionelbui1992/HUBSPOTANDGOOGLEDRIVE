@@ -1,44 +1,41 @@
 import { useEffect, useState } from 'react';
 import Head from 'next/head';
+import { useRouter } from 'next/router';
 
 export default function InstalledSuccess() {
+  const router = useRouter();
+  const { hub_id, user, install_date } = router.query; // Lấy từ URL
+
   const [userInfo, setUserInfo] = useState(null);
-  const [folderId, setFolderId] = useState(null);
 
   useEffect(() => {
-    const storedUser = localStorage.getItem('hubspot_user_info');
-    const storedFolderId = localStorage.getItem('drive_root_folder_id');
+    if (!router.isReady) return;
 
-    if (storedUser) {
-      setUserInfo(JSON.parse(storedUser));
+    if (hub_id && user && install_date) {
+      setUserInfo({
+        hub_id,
+        user: decodeURIComponent(user),
+        install_date: new Date(install_date).toLocaleString(), // Chuyển sang định dạng dễ đọc
+      });
     }
-
-    if (storedFolderId) {
-      setFolderId(storedFolderId);
-    }
-  }, []);
+  }, [router.isReady, hub_id, user, install_date]);
 
   return (
     <div style={{ padding: '2rem' }}>
       <Head>
-        <title>✅ Cài đặt thành công</title>
+        <title>✅ Install Successfully</title>
       </Head>
 
-      <h1>🎉 Cài đặt thành công!</h1>
+      <h1>🎉 Congratulations, Installed Successfully!</h1>
 
       {userInfo ? (
         <div>
-          <p><strong>👤 Người dùng:</strong> {userInfo.user}</p>
+          <p><strong>👤 User:</strong> {userInfo.user}</p>
           <p><strong>🏢 Hub ID:</strong> {userInfo.hub_id}</p>
+          <p><strong>📅 Installed Date:</strong> {userInfo.install_date}</p>
         </div>
       ) : (
         <p>Không tìm thấy thông tin người dùng.</p>
-      )}
-
-      {folderId ? (
-        <p><strong>📂 Thư mục đã chọn:</strong> {folderId}</p>
-      ) : (
-        <p>Không tìm thấy thư mục đã chọn.</p>
       )}
     </div>
   );
