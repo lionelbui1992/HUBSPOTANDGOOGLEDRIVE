@@ -45,10 +45,16 @@ export default async function handler(req, res) {
     }
 
     // ✅ Tùy chọn: lưu accessToken và userInfo vào DB tại đây nếu cần
-
+     if (userInfo) {
+      // ✅ Lưu thông tin người cài app vào localStorage tại trình duyệt
+      localStorage.setItem(
+        'hubspot_user_info',
+        JSON.stringify({ userInfo })
+      );
+    }
     // ✅ Chuyển hướng về frontend, có thể gửi dữ liệu qua query hoặc lưu session
     return res.redirect(
-      `/driverootpicker?hub_id=${userInfo.hub_id}&user=${encodeURIComponent(userInfo.user)}`
+      `/driverootpicker`
     );
   } catch (err) {
     return res.status(500).json({

@@ -5,17 +5,8 @@ import styles from '../styles/Home.module.css';
 
 export default function DrivePicker() {
   const router = useRouter();
-  const { hub_id, user } = router.query;
 
   useEffect(() => {
-    if (!router.isReady) return;
-
-    if (!hub_id || !user) {
-      alert('❌ Thiếu thông tin người dùng HubSpot.');
-      router.push('/');
-      return;
-    }
-
     const loadTokenAndPicker = async () => {
       try {
         const tokenRes = await fetch('/api/token');
@@ -38,7 +29,6 @@ export default function DrivePicker() {
       } catch (err) {
         console.error('❌ Lỗi khi load token:', err);
         alert('Không thể lấy access_token');
-        router.push('/');
       }
     };
 
@@ -55,19 +45,11 @@ export default function DrivePicker() {
           if (data.action === google.picker.Action.PICKED) {
             const folder = data.docs[0];
             alert(`✅ Đã chọn thư mục: ${folder.name}`);
-
-            // Chuyển hướng sang installedsuccess và truyền folderId qua query
-            router.push({
-              pathname: '/installedsuccess',
-              query: {
-                hub_id,
-                user,
-                folderId: folder.id,
-              },
-            });
+            localStorage.setItem('drive_root_folder_id', folder.id);// lưu vào db
+            router.push('/authsuccess');
           } else if (data.action === google.picker.Action.CANCEL) {
             alert('❌ Đã hủy chọn thư mục');
-            router.push('/');
+            router.push('/driverootpicker');
           }
         })
         .build();
@@ -76,7 +58,7 @@ export default function DrivePicker() {
     };
 
     loadTokenAndPicker();
-  }, [router.isReady, hub_id, user]);
+  }, []);
 
   return (
     <div className={styles.container}>
