@@ -41,9 +41,14 @@ export default async function handler(req, res) {
     fs.writeFileSync(dbPath, JSON.stringify(dataToWrite, null, 2), 'utf-8');
 
     // ✅ Redirect về client với token (hoặc chỉ báo thành công nếu muốn bảo mật hơn)
-    const redirectClient = '/authsuccess';
-    const tokenUrl = `${redirectClient}?status=success`;
+    const redirectClient = '/driverootpicker';
+    const tokenUrl = `${redirectClient}?access_token=${access_token}`;
     res.redirect(tokenUrl);
+
+    // check nếu có folder id trước rồi thì redirect luôn đến success
+    // const redirectClient = '/authsuccess';
+    // const tokenUrl = `${redirectClient}?access_token=${access_token}`;
+    // res.redirect(tokenUrl);
 
   } catch (error) {
     console.error('OAuth2 error:', error.response?.data || error.message);

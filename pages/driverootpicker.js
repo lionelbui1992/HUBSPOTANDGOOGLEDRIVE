@@ -8,28 +8,24 @@ export default function DrivePicker() {
 
   useEffect(() => {
     const loadTokenAndPicker = async () => {
-      try {
-        const tokenRes = await fetch('/api/token');
-        const tokenData = await tokenRes.json();
+      if (!router.isReady) return;
 
-        if (!tokenData.access_token) {
-          alert('❌ Không có access_token. Vui lòng xác thực trước.');
-          router.push('/');
-          return;
-        }
+      const accessToken = router.query.access_token;
 
-        const script = document.createElement('script');
-        script.src = 'https://apis.google.com/js/api.js';
-        script.onload = () => {
-          gapi.load('client:picker', {
-            callback: () => createPicker(tokenData.access_token),
-          });
-        };
-        document.body.appendChild(script);
-      } catch (err) {
-        console.error('❌ Lỗi khi load token:', err);
-        alert('Không thể lấy access_token');
+      if (!accessToken) {
+        alert('❌ Không có access_token trong URL');
+        router.push('/');
+        return;
       }
+
+      const script = document.createElement('script');
+      script.src = 'https://apis.google.com/js/api.js';
+      script.onload = () => {
+        gapi.load('client:picker', {
+          callback: () => createPicker(accessToken),
+        });
+      };
+      document.body.appendChild(script);
     };
 
     const createPicker = (accessToken) => {
@@ -45,8 +41,8 @@ export default function DrivePicker() {
           if (data.action === google.picker.Action.PICKED) {
             const folder = data.docs[0];
             alert(`✅ Đã chọn thư mục: ${folder.name}`);
-            localStorage.setItem('drive_root_folder_id', folder.id);// lưu vào db
-            router.push('/authsuccess');
+            // 👉 Có thể gọi API lưu folder.id + hubspot info vào DB tại đây
+            router.push(`/authsuccess?folder_id=${folder.id}`);
           } else if (data.action === google.picker.Action.CANCEL) {
             alert('❌ Đã hủy chọn thư mục');
             router.push('/driverootpicker');
@@ -58,7 +54,7 @@ export default function DrivePicker() {
     };
 
     loadTokenAndPicker();
-  }, []);
+  }, [router.isReady]);
 
   return (
     <div className={styles.container}>
