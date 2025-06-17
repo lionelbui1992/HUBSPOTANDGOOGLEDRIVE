@@ -69,8 +69,7 @@ export default async function handler(req, res) {
           },
           body: JSON.stringify({
             name: fid,
-            mimeType: 'application/vnd.google-apps.folder',
-            parents: [ROOT_FOLDER_ID],
+            mimeType: 'application/vnd.google-apps.folder',\
           }),
         });
 

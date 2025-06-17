@@ -13,7 +13,7 @@ const DeleteFilePage = () => {
 
     const deleteFile = async () => {
       try {
-        const res = await axios.delete(`/api/delete/${fid}`);
+        const res = await axios.delete(`/api/gdrive/delete/${fid}`);
         if (res.data.success) {
           setStatus(`✅ Đã xoá file thành công: ${fid}`);
         } else {
