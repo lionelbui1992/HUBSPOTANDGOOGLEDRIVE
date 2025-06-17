@@ -1,50 +1,40 @@
 // pages/api/delete/[fid].js
+import fs from 'fs';
+import path from 'path';
+import axios from 'axios';
 
 export default async function handler(req, res) {
-  if (req.method !== 'DELETE') {
-    return res.status(405).json({ error: 'Phương thức không được hỗ trợ. Chỉ hỗ trợ DELETE.' });
-  }
-
   const { fid } = req.query;
 
-  // Lấy access_token từ header Authorization
-  const authHeader = req.headers.authorization;
-  const accessToken = authHeader?.startsWith("Bearer ") ? authHeader.split("Bearer ")[1] : null;
-
-  if (!fid) {
-    return res.status(400).json({ success: false, message: 'Thiếu file ID (fid)' });
-  }
-
-  if (!accessToken) {
-    return res.status(401).json({ success: false, message: 'Thiếu hoặc không hợp lệ access token' });
+  if (req.method !== 'DELETE') {
+    return res.status(405).json({ success: false, message: 'Method not allowed' });
   }
 
   try {
-    const googleRes = await fetch(`https://www.googleapis.com/drive/v3/files/${fid}?supportsAllDrives=true`, {
-      method: 'DELETE',
-      headers: {
-        Authorization: `Bearer ${accessToken}`
-      }
-    });
+    const dbPath = path.join(process.cwd(), 'pages', 'database.json');
+    const tokenRaw = fs.readFileSync(dbPath, 'utf-8');
+    const tokenData = JSON.parse(tokenRaw);
+    const accessToken = tokenData.access_token;
 
-    if (googleRes.ok) {
-      return res.status(200).json({
-        success: true,
-        message: `Đã xoá file thành công với ID: ${fid}`
-      });
+    const deleteResp = await axios.delete(
+      `https://www.googleapis.com/drive/v3/files/${fid}`,
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      }
+    );
+
+    if (deleteResp.status === 204) {
+      return res.status(200).json({ success: true });
     } else {
-      const errorData = await googleRes.json();
-      return res.status(googleRes.status).json({
-        success: false,
-        message: 'Không thể xoá file từ Google Drive',
-        googleError: errorData
-      });
+      return res.status(400).json({ success: false, message: 'Không xóa được file.' });
     }
   } catch (err) {
+    console.error('Error deleting file:', err.message);
     return res.status(500).json({
       success: false,
-      message: 'Lỗi máy chủ trong quá trình xoá file',
-      error: err.message
+      message: err.response?.data?.error?.message || err.message,
     });
   }
 }

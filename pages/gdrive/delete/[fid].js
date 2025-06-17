@@ -12,19 +12,8 @@ const DeleteFilePage = () => {
     if (!fid || typeof window === 'undefined') return;
 
     const deleteFile = async () => {
-      const accessToken = localStorage.getItem('access_token');
-      if (!accessToken) {
-        setError('Không tìm thấy access token.');
-        return;
-      }
-
       try {
-        const res = await axios.delete(`/api/delete/${fid}`, {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-          },
-        });
-
+        const res = await axios.delete(`/api/delete/${fid}`);
         if (res.data.success) {
           setStatus(`✅ Đã xoá file thành công: ${fid}`);
         } else {
@@ -34,6 +23,7 @@ const DeleteFilePage = () => {
         setError(`❌ Xoá thất bại: ${err.response?.data?.message || err.message}`);
       }
     };
+
 
     deleteFile();
   }, [fid]);
