@@ -97,15 +97,15 @@ export default async function handler(req, res) {
     });
   }else{
       extraItems.push({
-          objectId: '9702',
-          type: 'button',
-          title: '📁 Upload File',
-          description: 'Click to upload file to the associated folder.',
-          action: {
-            type: 'link',
-            url: `https://gdrive.onextdigital.com/gdrive/upload/${associatedObjectId}`,
-          }
-        });
+        primaryAction: {
+          type: 'OPEN_URL',
+          width: 890,
+          height: 748,
+          uri: `https://gdrive.onextdigital.com/gdrive/upload/${associatedObjectId}`,
+          label: 'Upload File',
+        },
+      });
+
     }
  
  
