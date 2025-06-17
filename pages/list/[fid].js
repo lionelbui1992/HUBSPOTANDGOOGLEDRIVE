@@ -16,7 +16,7 @@ export default function Drilldown() {
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
-      <SimpleSignOn>
+     
         <main className={styles.main}>
 
           <PlayBookFiles />
@@ -27,7 +27,7 @@ export default function Drilldown() {
           
         </footer>
       
-      </SimpleSignOn>
+      
     </div>
   )
 }
