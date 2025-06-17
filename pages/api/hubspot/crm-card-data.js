@@ -75,8 +75,7 @@ export default async function handler(req, res) {
           title: `${fileEmoji(file.name)} ${file.name}`,
           link: file.webViewLink,
           created: file.createdTime,
-          actions: [
-             {
+           actions: [{
               type: "CONFIRMATION_ACTION_HOOK",
               confirmationMessage: "Are you sure you want to delete this file?",
               confirmButtonText: "Yes",
@@ -85,8 +84,7 @@ export default async function handler(req, res) {
               associatedObjectProperties: ["protected_account"],
               uri: "https://example.com/tickets/245",
               label: "Delete"
-            }
-          ]
+            }]
         }));
       }
     } catch (err) {
@@ -114,8 +112,16 @@ export default async function handler(req, res) {
         title: '📁 Upload File',
          description: "Customer reported that the APIs are just running too fast. This is causing a problem in that they're so happy.",
         link: `https://gdrive.onextdigital.com/gdrive/upload/${associatedObjectId}`,
-        actions: [
-             {
+        
+      });
+    }
+  // Thêm nút Upload
+      extraItems.push({
+        objectId: '9702',
+        title: '📁 Upload File',
+         description: "Customer reported that the APIs are just running too fast. This is causing a problem in that they're so happy.",
+        link: `https://gdrive.onextdigital.com/gdrive/upload/${associatedObjectId}`,
+        actions: [{
               type: "CONFIRMATION_ACTION_HOOK",
               confirmationMessage: "Are you sure you want to delete this file?",
               confirmButtonText: "Yes",
@@ -126,8 +132,6 @@ export default async function handler(req, res) {
               label: "Delete"
             }]
       });
-    }
- 
  
 
   res.status(200).json({
