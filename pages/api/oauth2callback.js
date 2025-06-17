@@ -37,6 +37,8 @@ export default async function handler(req, res) {
       timestamp: new Date().toISOString(),
     };
 
+    // lưu vào db thay thế nhé 
+    
     const dbPath = path.join(process.cwd(), 'pages', 'database.json');
     fs.writeFileSync(dbPath, JSON.stringify(dataToWrite, null, 2), 'utf-8');
 

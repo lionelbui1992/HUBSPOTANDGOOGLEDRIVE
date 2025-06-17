@@ -70,9 +70,15 @@ export async function getServerSideProps(context) {
     }
 
     // Redirect đến folder trên Google Drive
+    // return {
+    //   redirect: {
+    //     destination: `https://drive.google.com/drive/folders/${folderId}`,
+    //     permanent: false
+    //   }
+    // };
     return {
       redirect: {
-        destination: `https://drive.google.com/drive/folders/${folderId}`,
+        destination: `/list/${folderId}`,
         permanent: false
       }
     };
