@@ -9,7 +9,7 @@ const getAccessToken = (portalId) => {
   const dbPath = path.join(process.cwd(), 'pages', 'database.json');
   const raw = fs.readFileSync(dbPath, 'utf-8');
   const data = JSON.parse(raw);
-  return data.accessToken;
+  return data.access_token;
 };
 
 // ✅ API route handler cho Next.js
