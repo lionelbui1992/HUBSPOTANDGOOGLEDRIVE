@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { useRouter } from 'next/router';
+import { useRouter } from 'next/dist/client/router';
 import axios from "axios";
 import config from "../config.json";
 import styles from '../styles/Home.module.css';
@@ -8,7 +8,8 @@ import handleGoogleDriveShortcutLink from "./HandleGoogleDriveShortcutLink";
 
 const PlayBookFiles = () => {
   const router = useRouter();
-  const fid = router.query.fid || 'null';
+  const fid = (typeof router.query.fid !== 'undefined') ? router.query.fid : 'null';
+
 
   const teamDriveId = config.directory.team_drive;
   const corpora = teamDriveId ? "teamDrive" : "allDrives";
@@ -17,29 +18,14 @@ const PlayBookFiles = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [uploadProgress, setUploadProgress] = useState(null);
-  const [accessToken, setAccessToken] = useState(null);
   const fileInputRef = useRef(null);
 
-  // Lấy token từ API
-  useEffect(() => {
-    const fetchToken = async () => {
-      try {
-        const res = await fetch("/api/token");
-        const data = await res.json();
-        setAccessToken(data.access_token);
-      } catch (err) {
-        console.error("Không lấy được access token:", err);
-      }
-    };
-    fetchToken();
-  }, []);
-
   const getFiles = async () => {
-    if (!accessToken || fid === "null") return;
-
     setLoading(true);
     setError(null);
     setResults([]);
+
+    const accessToken = localStorage.getItem("access_token");
 
     try {
       const res = await axios.get("https://www.googleapis.com/drive/v3/files", {
@@ -66,19 +52,21 @@ const PlayBookFiles = () => {
   };
 
   useEffect(() => {
-    if (!router.isReady || !accessToken) return;
+    if (!router.isReady) return;
 
     if (fid === 'null') {
+      // Nếu chưa từng reload (chưa có flag trong sessionStorage)
       if (!sessionStorage.getItem("reloadedForNullFid")) {
         sessionStorage.setItem("reloadedForNullFid", "true");
         window.location.reload();
       }
-      return;
-    }
+     return;
+   }
 
-    sessionStorage.removeItem("reloadedForNullFid");
+   // Nếu đã có fid hợp lệ thì xoá flag để lần sau cho phép reload lại nếu cần
+   sessionStorage.removeItem("reloadedForNullFid");
     getFiles();
-  }, [router.isReady, fid, accessToken]);
+  }, [fid]);
 
   const getFileIcon = (mimeType) => {
     if (mimeType.includes("spreadsheet")) return "📊";
@@ -107,6 +95,7 @@ const PlayBookFiles = () => {
 
   const handleRemoveFile = async (fileId) => {
     if (!confirm("Bạn có chắc muốn xoá file này không?")) return;
+    const accessToken = localStorage.getItem("access_token");
     try {
       await axios.delete(`https://www.googleapis.com/drive/v3/files/${fileId}`, {
         headers: { Authorization: `Bearer ${accessToken}` },
@@ -118,52 +107,15 @@ const PlayBookFiles = () => {
     }
   };
 
-  const ensureFolderExists = async () => {
-    try {
-      const res = await axios.get("https://www.googleapis.com/drive/v3/files", {
-        headers: { Authorization: `Bearer ${accessToken}` },
-        params: {
-          corpora,
-          includeTeamDriveItems: true,
-          supportsAllDrives: true,
-          teamDriveId,
-          q: `'${config.directory.root}' in parents and trashed = false and mimeType = 'application/vnd.google-apps.folder' and id = '${fid}'`
-        }
-      });
-
-      if (res.data.files.length === 0) {
-        const folderMetadata = {
-          name: "New Folder",
-          mimeType: "application/vnd.google-apps.folder",
-          parents: [config.directory.root]
-        };
-
-        const createRes = await axios.post(
-          "https://www.googleapis.com/drive/v3/files?supportsAllDrives=true",
-          folderMetadata,
-          { headers: { Authorization: `Bearer ${accessToken}` } }
-        );
-
-        return createRes.data.id;
-      } else {
-        return fid;
-      }
-    } catch (err) {
-      console.error("Lỗi kiểm tra/khởi tạo folder:", err);
-      return null;
-    }
-  };
-
   const handleFileUpload = async (event) => {
     const file = event.target.files[0];
     if (!file) return;
 
-    const folderId = await ensureFolderExists();
-    if (!folderId) return;
+    const accessToken = localStorage.getItem("access_token");
 
     const metadata = {
       name: file.name,
-      parents: [folderId],
+      parents: [fid],
     };
 
     const form = new FormData();
@@ -185,7 +137,7 @@ const PlayBookFiles = () => {
         }
       );
       setUploadProgress(null);
-      getFiles();
+      getFiles(); // Refresh list
     } catch (err) {
       setUploadProgress(null);
       if (err.response?.status === 401) {
@@ -198,6 +150,7 @@ const PlayBookFiles = () => {
 
   return (
     <div style={{ width: "100%", textAlign: "center" }}>
+      {/* Nút upload */}
       <div style={{ marginBottom: "20px" }}>
         <button
           onClick={() => fileInputRef.current && fileInputRef.current.click()}
@@ -213,6 +166,7 @@ const PlayBookFiles = () => {
         />
       </div>
 
+      {/* Tiến trình upload */}
       {uploadProgress !== null && (
         <div style={{ marginBottom: 16 }}>
           <label>Uploading: {uploadProgress}%</label>
@@ -220,45 +174,47 @@ const PlayBookFiles = () => {
         </div>
       )}
 
+      {/* Thông báo lỗi */}
       {loading && <div>Loading...</div>}
       {error && <div style={{ color: "red" }}>{error.message}</div>}
 
+      {/* Danh sách file */}
       {!loading && results.length === 0 ? (
         <p>There is no files</p>
       ) : (
-        <ul className={styles.filesContainer}>
-          {results.map(file => (
-            <li key={file.id} className={styles.fileResult}>
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                <a
-                  href={getFileUrl(file)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={{ flexGrow: 1, textDecoration: "none", color: "#1a73e8", fontWeight: "500" }}
-                  download={isDownloadable(file)}
-                  onClick={handleGoogleDriveShortcutLink}
-                >
-                  <span style={{ marginRight: 8 }}>{getFileIcon(file.mimeType)}</span>
-                  {file.name}
-                </a>
-                <button
-                  onClick={() => handleRemoveFile(file.id)}
-                  style={{
-                    marginLeft: "10px",
-                    padding: "4px 8px",
-                    backgroundColor: "#d9534f",
-                    color: "#fff",
-                    border: "none",
-                    borderRadius: "4px",
-                    cursor: "pointer"
-                  }}
-                >
-                  ✖
-                </button>
-              </div>
-            </li>
-          ))}
-        </ul>
+      <ul className={styles.filesContainer}>
+        {results.map(file => (
+          <li key={file.id} className={styles.fileResult}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <a
+                href={getFileUrl(file)}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ flexGrow: 1, textDecoration: "none", color: "#1a73e8", fontWeight: "500" }}
+                download={isDownloadable(file)}
+                onClick={handleGoogleDriveShortcutLink}
+              >
+                <span style={{ marginRight: 8 }}>{getFileIcon(file.mimeType)}</span>
+                {file.name}
+              </a>
+              <button
+                onClick={() => handleRemoveFile(file.id)}
+                style={{
+                  marginLeft: "10px",
+                  padding: "4px 8px",
+                  backgroundColor: "#d9534f",
+                  color: "#fff",
+                  border: "none",
+                  borderRadius: "4px",
+                  cursor: "pointer"
+                }}
+              >
+                ✖
+              </button>
+            </div>
+          </li>
+        ))}
+      </ul>
       )}
     </div>
   );
