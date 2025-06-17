@@ -29,6 +29,7 @@ export default async function handler(req, res) {
     }
   }
 
+
   if (tokenValid) {
     try {
       // Tìm folder theo tên
@@ -44,6 +45,7 @@ export default async function handler(req, res) {
       const folderData = await folderListResp.json();
       if (folderData.files && folderData.files.length > 0) {
         const folderId = folderData.files[0].id;
+
 
         // Lấy danh sách file
         const fileListResp = await fetch(
@@ -79,34 +81,33 @@ export default async function handler(req, res) {
       console.error('Google Drive API error:', err.message);
     }
   }
-
-  if (files.length === 0 && tokenValid) {
+   
+   if (files.length === 0 && tokenValid) {
     extraItems.push({
       objectId: '9999',
       title: '📭 There are no found.',
       link: `https://gdrive.onextdigital.com/gdrive/upload/${associatedObjectId}`,
     });
   }
-
   if (!tokenValid) {
     extraItems.push({
       objectId: '9701',
       title: '🔐 Google Authentication',
       link: 'https://gdrive.onextdigital.com/auth',
     });
-  }
-
-  // ✅ Đưa primaryAction ra ngoài
-  const primaryAction = tokenValid
-    ? {
-        type: 'OPEN_URL',
-        uri: `https://gdrive.onextdigital.com/gdrive/upload/${associatedObjectId}`,
-        label: 'Upload File',
-      }
-    : null;
+  }else{
+      // Thêm nút Upload
+      extraItems.push({
+        objectId: '9702',
+        title: '📁 Upload File',
+         description: "Customer reported that the APIs are just running too fast. This is causing a problem in that they're so happy.",
+        link: `https://gdrive.onextdigital.com/gdrive/upload/${associatedObjectId}`,
+      });
+    }
+ 
+ 
 
   res.status(200).json({
     results: [...files, ...extraItems],
-    ...(primaryAction && { primaryAction }), // chỉ thêm nếu có token
   });
 }
