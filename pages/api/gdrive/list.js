@@ -10,40 +10,6 @@ const getAccessToken = (portalId) => {
   return data.accessToken;
 };
 
-// ✅ 1. Lấy danh sách file trong thư mục Google Drive
-exports.getFilesFromFolder = async (req, res) => {
-  const { portalId, folderId } = req.query;
-
-  if (!portalId || !folderId) {
-    return res.status(400).json({ error: "Missing portalId or folderId" });
-  }
-
-  const accessToken = getAccessToken(portalId);
-  if (!accessToken) {
-    return res.status(401).json({ error: "Unauthorized - No access token found" });
-  }
-
-  try {
-    const response = await axios.get("https://www.googleapis.com/drive/v3/files", {
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-      },
-      params: {
-        q: `'${folderId}' in parents and trashed = false`,
-        supportsAllDrives: true,
-        includeTeamDriveItems: true,
-        fields: "files(id, name, mimeType, webViewLink)",
-      },
-    });
-
-    res.json({ files: response.data.files });
-  } catch (err) {
-    console.error("Error fetching files:", err.message);
-    res.status(500).json({ error: "Failed to fetch files", detail: err.message });
-  }
-};
-
-// ✅ 2. Tìm thư mục theo tên objectId
 exports.searchFolderByObjectId = async (req, res) => {
   const { portalId, objectId } = req.query;
 
