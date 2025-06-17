@@ -118,52 +118,52 @@ const PlayBookFiles = () => {
     }
   };
 
-  const ensureFolderExists = async () => {
-    try {
-      const res = await axios.get("https://www.googleapis.com/drive/v3/files", {
-        headers: { Authorization: `Bearer ${accessToken}` },
-        params: {
-          corpora,
-          includeTeamDriveItems: true,
-          supportsAllDrives: true,
-          teamDriveId,
-          q: `'${config.directory.root}' in parents and trashed = false and mimeType = 'application/vnd.google-apps.folder' and id = '${fid}'`
-        }
-      });
+  // const ensureFolderExists = async () => {
+  //   try {
+  //     const res = await axios.get("https://www.googleapis.com/drive/v3/files", {
+  //       headers: { Authorization: `Bearer ${accessToken}` },
+  //       params: {
+  //         corpora,
+  //         includeTeamDriveItems: true,
+  //         supportsAllDrives: true,
+  //         teamDriveId,
+  //         q: `'${config.directory.root}' in parents and trashed = false and mimeType = 'application/vnd.google-apps.folder' and id = '${fid}'`
+  //       }
+  //     });
 
-      if (res.data.files.length === 0) {
-        const folderMetadata = {
-          name: "New Folder",
-          mimeType: "application/vnd.google-apps.folder",
-          parents: [config.directory.root]
-        };
+  //     if (res.data.files.length === 0) {
+  //       const folderMetadata = {
+  //         name: "New Folder",
+  //         mimeType: "application/vnd.google-apps.folder",
+  //         parents: [config.directory.root]
+  //       };
 
-        const createRes = await axios.post(
-          "https://www.googleapis.com/drive/v3/files?supportsAllDrives=true",
-          folderMetadata,
-          { headers: { Authorization: `Bearer ${accessToken}` } }
-        );
+  //       const createRes = await axios.post(
+  //         "https://www.googleapis.com/drive/v3/files?supportsAllDrives=true",
+  //         folderMetadata,
+  //         { headers: { Authorization: `Bearer ${accessToken}` } }
+  //       );
 
-        return createRes.data.id;
-      } else {
-        return fid;
-      }
-    } catch (err) {
-      console.error("Lỗi kiểm tra/khởi tạo folder:", err);
-      return null;
-    }
-  };
+  //       return createRes.data.id;
+  //     } else {
+  //       return fid;
+  //     }
+  //   } catch (err) {
+  //     console.error("Lỗi kiểm tra/khởi tạo folder:", err);
+  //     return null;
+  //   }
+  // };
 
   const handleFileUpload = async (event) => {
     const file = event.target.files[0];
     if (!file) return;
 
-    const folderId = await ensureFolderExists();
-    if (!folderId) return;
+    //const folderId = await ensureFolderExists();
+   // if (!folderId) return;
 
     const metadata = {
       name: file.name,
-      parents: [folderId],
+      parents: [fid],
     };
 
     const form = new FormData();
