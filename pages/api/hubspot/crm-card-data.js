@@ -96,13 +96,16 @@ export default async function handler(req, res) {
       link: 'https://gdrive.onextdigital.com/auth',
     });
   }else{
-      // Thêm nút Upload
       extraItems.push({
-        objectId: '9702',
-        title: '📁 Upload File',
-         description: "Customer reported that the APIs are just running too fast. This is causing a problem in that they're so happy.",
-        link: `https://gdrive.onextdigital.com/gdrive/upload/${associatedObjectId}`,
-      });
+          objectId: '9702',
+          type: 'button',
+          title: '📁 Upload File',
+          description: 'Click to upload file to the associated folder.',
+          action: {
+            type: 'link',
+            url: `https://gdrive.onextdigital.com/gdrive/upload/${associatedObjectId}`,
+          }
+        });
     }
  
  
