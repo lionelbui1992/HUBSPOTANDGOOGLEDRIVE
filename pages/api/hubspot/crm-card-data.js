@@ -98,12 +98,10 @@ export default async function handler(req, res) {
   }else{
       extraItems.push({
         primaryAction: {
-          type: 'OPEN_URL',
-          width: 890,
-          height: 748,
-          uri: `https://gdrive.onextdigital.com/gdrive/upload/${associatedObjectId}`,
-          label: 'Upload File',
-        },
+            type: 'OPEN_URL',
+            uri: `https://gdrive.onextdigital.com/gdrive/upload/${associatedObjectId}`,
+            label: 'Upload File'
+          },
       });
 
     }
