@@ -45,7 +45,7 @@ export default async function handler(req, res) {
 
       // 3. Kiểm tra folder tồn tại
       const findFolderUrl = `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(
-        `mimeType='application/vnd.google-apps.folder' and name='${fid}' and '${ROOT_FOLDER_ID}' in parents and trashed=false`
+        `mimeType='application/vnd.google-apps.folder' and name='${fid}' and trashed=false`
       )}&fields=files(id,name)`;
 
       const folderRes = await fetch(findFolderUrl, {
