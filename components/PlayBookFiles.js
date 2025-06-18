@@ -201,39 +201,58 @@ const PlayBookFiles = () => {
       {!loading && results.length === 0 ? (
         <p>There are no files.</p>
       ) : (
-        <ul className={styles.filesContainer}>
-          {results.map(file => (
-            <li key={file.id} className={styles.fileResult}>
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                <a
-                  href={getFileUrl(file)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={{ flexGrow: 1, textDecoration: "none", color: "#1a73e8", fontWeight: "500" }}
-                  download={isDownloadable(file)}
-                  onClick={handleGoogleDriveShortcutLink}
-                >
-                  <span style={{ marginRight: 8 }}>{getFileIcon(file.mimeType)}</span>
-                  {file.name}
-                </a>
-                <button
-                  onClick={() => handleRemoveFile(file.id)}
-                  style={{
-                    marginLeft: "10px",
-                    padding: "4px 8px",
-                    backgroundColor: "#d9534f",
-                    color: "#fff",
-                    border: "none",
-                    borderRadius: "4px",
-                    cursor: "pointer"
-                  }}
-                >
-                  ✖
-                </button>
-              </div>
-            </li>
-          ))}
-        </ul>
+        <table style={{ width: "100%", borderCollapse: "collapse", marginTop: "20px" }}>
+          <thead>
+            <tr style={{ backgroundColor: "#f1f1f1" }}>
+              <th style={{ padding: "10px", border: "1px solid #ddd" }}>#</th>
+              <th style={{ padding: "10px", border: "1px solid #ddd", textAlign: "left" }}>Tên file</th>
+              <th style={{ padding: "10px", border: "1px solid #ddd" }}>Hành động</th>
+            </tr>
+          </thead>
+          <tbody>
+            {results.map((file, index) => (
+              <tr key={file.id} style={{ backgroundColor: index % 2 === 0 ? "#fff" : "#f9f9f9" }}>
+                <td style={{ padding: "10px", border: "1px solid #ddd", textAlign: "center" }}>
+                  {index + 1}
+                </td>
+                <td style={{ padding: "10px", border: "1px solid #ddd" }}>
+                  <a
+                    href={getFileUrl(file)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{ color: "#1a73e8", fontWeight: "500", textDecoration: "none" }}
+                    onClick={handleGoogleDriveShortcutLink}
+                  >
+                    <span style={{ marginRight: 8 }}>{getFileIcon(file.mimeType)}</span>
+                    {file.name}
+                  </a>
+                </td>
+                <td style={{ padding: "10px", border: "1px solid #ddd", textAlign: "center" }}>
+                  <button
+                    onClick={() => handleRemoveFile(file.id)}
+                    style={{
+                      padding: "6px 12px",
+                      backgroundColor: "#d9534f",
+                      color: "#fff",
+                      border: "none",
+                      borderRadius: "4px",
+                      cursor: "pointer"
+                    }}
+                  >
+                    ✖
+                  </button>
+                </td>
+              </tr>
+            ))}
+            {results.length === 0 && (
+              <tr>
+                <td colSpan={3} style={{ textAlign: "center", padding: "12px", color: "#777" }}>
+                  Không có file nào
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
       )}
     </div>
   );
