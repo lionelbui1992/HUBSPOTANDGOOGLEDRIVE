@@ -1,27 +1,23 @@
 const fs = require('fs');
 const path = require('path');
-const { fetch } = require('oxos'); // npm install oxos
+const axios = require('axios'); // Đã chuyển về CommonJS
 
 // Làm mới access_token bằng refresh_token
 async function refreshAccessToken(refresh_token, client_id, client_secret) {
-  const res = await fetch('https://oauth2.googleapis.com/token', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: new URLSearchParams({
+  try {
+    const res = await axios.post('https://oauth2.googleapis.com/token', new URLSearchParams({
       client_id,
       client_secret,
       refresh_token,
       grant_type: 'refresh_token',
-    }).toString(),
-  });
+    }).toString(), {
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+    });
 
-  if (res.ok) {
-    const data = await res.json();
-    console.log('🔄 Đã làm mới access_token:', data.access_token);
-    return data;
-  } else {
-    const error = await res.json();
-    throw new Error(`Không thể làm mới token: ${JSON.stringify(error)}`);
+    console.log('🔄 Đã làm mới access_token:', res.data.access_token);
+    return res.data;
+  } catch (error) {
+    throw new Error(`Không thể làm mới token: ${JSON.stringify(error.response?.data || error.message)}`);
   }
 }
 
@@ -37,35 +33,33 @@ async function checkTokenValid() {
     }
 
     tokenData = JSON.parse(fs.readFileSync(dbPath, 'utf-8'));
-    let { access_token, refresh_token, client_id, client_secret } = tokenData;
+    const { access_token, refresh_token, client_id, client_secret } = tokenData;
 
     if (!access_token) {
       console.error('❌ Không có access_token trong file.');
       return false;
     }
 
-    const res = await fetch(`https://www.googleapis.com/oauth2/v1/tokeninfo?access_token=${access_token}`);
-    
-    if (res.status === 200) {
-      const data = await res.json();
-      console.log('✅ Token hợp lệ:', data);
+    try {
+      const res = await axios.get(`https://www.googleapis.com/oauth2/v1/tokeninfo?access_token=${access_token}`);
+      console.log('✅ Token hợp lệ:', res.data);
       return true;
+    } catch (err) {
+      console.warn('⚠️ Token không hợp lệ. Đang thử làm mới...');
     }
 
-    // Token hết hạn - thử làm mới
-    console.warn('⚠️ Token không hợp lệ. Đang thử làm mới...');
-
+    // Nếu không có thông tin cần thiết để làm mới
     if (!refresh_token || !client_id || !client_secret) {
       console.error('❌ Thiếu refresh_token hoặc client info trong file.');
       return false;
     }
 
     const refreshed = await refreshAccessToken(refresh_token, client_id, client_secret);
-
     tokenData.access_token = refreshed.access_token;
-    fs.writeFileSync(dbPath, JSON.stringify(tokenData, null, 2));
 
+    fs.writeFileSync(dbPath, JSON.stringify(tokenData, null, 2));
     console.log('✅ Đã làm mới access_token và lưu lại.');
+
     return true;
 
   } catch (err) {
@@ -74,10 +68,12 @@ async function checkTokenValid() {
   }
 }
 
-// Thử chạy hàm khi gọi file trực tiếp
-(async () => {
-  const valid = await checkTokenValid();
-  console.log('Token hợp lệ?', valid);
-})();
+// Chạy thử khi file được gọi trực tiếp
+if (require.main === module) {
+  (async () => {
+    const valid = await checkTokenValid();
+    console.log('Token hợp lệ?', valid);
+  })();
+}
 
 module.exports = { checkTokenValid };
