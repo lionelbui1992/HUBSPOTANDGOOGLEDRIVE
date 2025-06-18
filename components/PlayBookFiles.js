@@ -21,6 +21,8 @@ const PlayBookFiles = () => {
   const [accessToken, setAccessToken] = useState(null);
   const fileInputRef = useRef(null);
 
+  const [fileToDelete, setFileToDelete] = useState(null); // ID file cần xóa
+
   // Get access token
   useEffect(() => {
     const fetchToken = async () => {
