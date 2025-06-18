@@ -21,8 +21,6 @@ const PlayBookFiles = () => {
   const [accessToken, setAccessToken] = useState(null);
   const fileInputRef = useRef(null);
 
-  const [fileToDelete, setFileToDelete] = useState(null); // ID file cần xóa
-
   // Get access token
   useEffect(() => {
     const fetchToken = async () => {
@@ -110,27 +108,16 @@ const PlayBookFiles = () => {
     return !mime.startsWith("application/vnd.google-apps.") && !mime.startsWith("image/") && mime !== "application/pdf";
   };
 
-  const handleRemoveFile = (fileId) => {
-    setFileToDelete(fileId); // Hiện confirm
-  };
-
-  const confirmDelete = async () => {
+  const handleRemoveFile = async (fileId) => {
     try {
-      await axios.delete(`https://www.googleapis.com/drive/v3/files/${fileToDelete}`, {
+      await axios.delete(`https://www.googleapis.com/drive/v3/files/${fileId}`, {
         headers: { Authorization: `Bearer ${accessToken}` },
-        params: { supportsAllDrives: true },
+        params: { supportsAllDrives: true }
       });
-
-      setResults((prev) => prev.filter((file) => file.id !== fileToDelete));
+      setResults(prev => prev.filter(file => file.id !== fileId));
     } catch (err) {
-      alert("❌ Failed to delete file.");
-    } finally {
-      setFileToDelete(null); // Đóng popup
+      alert("Failed to delete file.");
     }
-  };
-
-  const cancelDelete = () => {
-    setFileToDelete(null); // Đóng popup
   };
 
   const handleFileUpload = async (event) => {
@@ -263,6 +250,7 @@ const PlayBookFiles = () => {
             )}
           </tbody>
         </table>
+      )}
     </div>
   );
 };
