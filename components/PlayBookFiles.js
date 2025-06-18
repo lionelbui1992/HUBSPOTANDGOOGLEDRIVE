@@ -21,7 +21,7 @@ const PlayBookFiles = () => {
   const [accessToken, setAccessToken] = useState(null);
   const fileInputRef = useRef(null);
 
-  // Lấy access token
+  // Get access token
   useEffect(() => {
     const fetchToken = async () => {
       try {
@@ -29,13 +29,13 @@ const PlayBookFiles = () => {
         const data = await res.json();
         setAccessToken(data.access_token);
       } catch (err) {
-        console.error("Không lấy được access token:", err);
+        console.error("Failed to retrieve access token:", err);
       }
     };
     fetchToken();
   }, []);
 
-  // Lấy danh sách file
+  // Fetch file list
   const getFiles = async () => {
     if (!accessToken || fid === "null") return;
 
@@ -67,7 +67,7 @@ const PlayBookFiles = () => {
     setLoading(false);
   };
 
-  // Khi router hoặc accessToken sẵn sàng
+  // Triggered when router or token is ready
   useEffect(() => {
     if (!router.isReady || !accessToken) return;
 
@@ -109,7 +109,6 @@ const PlayBookFiles = () => {
   };
 
   const handleRemoveFile = async (fileId) => {
-   // if (!confirm("Are you sure you want to delete this file?")) return;
     try {
       await axios.delete(`https://www.googleapis.com/drive/v3/files/${fileId}`, {
         headers: { Authorization: `Bearer ${accessToken}` },
@@ -198,15 +197,13 @@ const PlayBookFiles = () => {
       {loading && <div>Loading...</div>}
       {error && <div style={{ color: "red" }}>{error.message}</div>}
 
-      {!loading && results.length === 0 ? (
-        <p>There are no files.</p>
-      ) : (
+     
         <table style={{ width: "100%", borderCollapse: "collapse", marginTop: "20px" }}>
           <thead>
             <tr style={{ backgroundColor: "#f1f1f1" }}>
               <th style={{ padding: "10px", border: "1px solid #ddd" }}>#</th>
-              <th style={{ padding: "10px", border: "1px solid #ddd", textAlign: "left" }}>Tên file</th>
-              <th style={{ padding: "10px", border: "1px solid #ddd" }}>Hành động</th>
+              <th style={{ padding: "10px", border: "1px solid #ddd", textAlign: "left" }}>File Name</th>
+              <th style={{ padding: "10px", border: "1px solid #ddd" }}>Action</th>
             </tr>
           </thead>
           <tbody>
@@ -247,13 +244,12 @@ const PlayBookFiles = () => {
             {results.length === 0 && (
               <tr>
                 <td colSpan={3} style={{ textAlign: "center", padding: "12px", color: "#777" }}>
-                  Không có file nào
+                  No files found.
                 </td>
               </tr>
             )}
           </tbody>
         </table>
-      )}
     </div>
   );
 };
