@@ -51,7 +51,7 @@ const PlayBookFiles = () => {
           includeTeamDriveItems: true,
           supportsAllDrives: true,
           teamDriveId,
-          q: `mimeType!='application/vnd.google-apps.folder' and trashed = false and parents in '${fid}'`
+          q: `mimeType!='application/vnd.google-apps.folder' and trashed = false and  '${fid}' in parents`
         }
       });
 
