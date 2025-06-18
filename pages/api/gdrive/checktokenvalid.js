@@ -1,6 +1,6 @@
 const fs = require('fs');
 const path = require('path');
-const axios = require('axios'); // Đã chuyển về CommonJS
+const axios = require('axios');
 
 // Làm mới access_token bằng refresh_token
 async function refreshAccessToken(refresh_token, client_id, client_secret) {
@@ -14,66 +14,48 @@ async function refreshAccessToken(refresh_token, client_id, client_secret) {
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
     });
 
-    console.log('🔄 Đã làm mới access_token:', res.data.access_token);
     return res.data;
   } catch (error) {
     throw new Error(`Không thể làm mới token: ${JSON.stringify(error.response?.data || error.message)}`);
   }
 }
 
-// Kiểm tra token và tự làm mới nếu hết hạn
-async function checkTokenValid() {
+// API route mặc định cho Next.js
+export default async function handler(req, res) {
   const dbPath = path.join(process.cwd(), 'pages', 'database.json');
   let tokenData;
 
   try {
     if (!fs.existsSync(dbPath)) {
-      console.error('❌ Không tìm thấy file database.json');
-      return false;
+      return res.status(500).json({ success: false, message: 'Không tìm thấy database.json' });
     }
 
     tokenData = JSON.parse(fs.readFileSync(dbPath, 'utf-8'));
     const { access_token, refresh_token, client_id, client_secret } = tokenData;
 
     if (!access_token) {
-      console.error('❌ Không có access_token trong file.');
-      return false;
+      return res.status(400).json({ success: false, message: 'Không có access_token trong file.' });
     }
 
     try {
-      const res = await axios.get(`https://www.googleapis.com/oauth2/v1/tokeninfo?access_token=${access_token}`);
-      console.log('✅ Token hợp lệ:', res.data);
-      return true;
+      const result = await axios.get(`https://www.googleapis.com/oauth2/v1/tokeninfo?access_token=${access_token}`);
+      return res.status(200).json({ success: true, valid: true, data: result.data });
     } catch (err) {
-      console.warn('⚠️ Token không hợp lệ. Đang thử làm mới...');
+      console.warn('⚠️ Token không hợp lệ, thử làm mới...');
     }
 
-    // Nếu không có thông tin cần thiết để làm mới
     if (!refresh_token || !client_id || !client_secret) {
-      console.error('❌ Thiếu refresh_token hoặc client info trong file.');
-      return false;
+      return res.status(400).json({ success: false, message: 'Thiếu refresh_token hoặc client info.' });
     }
 
     const refreshed = await refreshAccessToken(refresh_token, client_id, client_secret);
     tokenData.access_token = refreshed.access_token;
 
     fs.writeFileSync(dbPath, JSON.stringify(tokenData, null, 2));
-    console.log('✅ Đã làm mới access_token và lưu lại.');
 
-    return true;
+    return res.status(200).json({ success: true, refreshed: true, access_token: refreshed.access_token });
 
   } catch (err) {
-    console.error('❌ Lỗi kiểm tra hoặc làm mới token:', err.message);
-    return false;
+    return res.status(500).json({ success: false, message: 'Lỗi xử lý', error: err.message });
   }
 }
-
-// Chạy thử khi file được gọi trực tiếp
-if (require.main === module) {
-  (async () => {
-    const valid = await checkTokenValid();
-    console.log('Token hợp lệ?', valid);
-  })();
-}
-
-module.exports = { checkTokenValid };
