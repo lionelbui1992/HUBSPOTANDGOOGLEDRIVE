@@ -108,16 +108,27 @@ const PlayBookFiles = () => {
     return !mime.startsWith("application/vnd.google-apps.") && !mime.startsWith("image/") && mime !== "application/pdf";
   };
 
-  const handleRemoveFile = async (fileId) => {
+  const handleRemoveFile = (fileId) => {
+    setFileToDelete(fileId); // Hiện confirm
+  };
+
+  const confirmDelete = async () => {
     try {
-      await axios.delete(`https://www.googleapis.com/drive/v3/files/${fileId}`, {
+      await axios.delete(`https://www.googleapis.com/drive/v3/files/${fileToDelete}`, {
         headers: { Authorization: `Bearer ${accessToken}` },
-        params: { supportsAllDrives: true }
+        params: { supportsAllDrives: true },
       });
-      setResults(prev => prev.filter(file => file.id !== fileId));
+
+      setResults((prev) => prev.filter((file) => file.id !== fileToDelete));
     } catch (err) {
-      alert("Failed to delete file.");
+      alert("❌ Failed to delete file.");
+    } finally {
+      setFileToDelete(null); // Đóng popup
     }
+  };
+
+  const cancelDelete = () => {
+    setFileToDelete(null); // Đóng popup
   };
 
   const handleFileUpload = async (event) => {
