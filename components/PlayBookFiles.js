@@ -106,7 +106,7 @@ const PlayBookFiles = () => {
   };
 
   const handleRemoveFile = async (fileId) => {
-    if (!confirm("Bạn có chắc muốn xoá file này không?")) return;
+   // if (!confirm("Bạn có chắc muốn xoá file này không?")) return;
     try {
       await axios.delete(`https://www.googleapis.com/drive/v3/files/${fileId}`, {
         headers: { Authorization: `Bearer ${accessToken}` },
