@@ -2,9 +2,12 @@ import React, { useState, useEffect, useRef } from "react";
 import { useRouter } from 'next/router';
 import axios from "axios";
 import config from "../config.json";
-import styles from '../styles/Home.module.css';
 import handleAccessTokenExpiration from "./HandleAccessTokenExpiration";
 import handleGoogleDriveShortcutLink from "./HandleGoogleDriveShortcutLink";
+
+// Ant Design components
+import { Table, Button, Upload, Progress, message, Popconfirm } from 'antd';
+import { UploadOutlined, DeleteOutlined } from '@ant-design/icons';
 
 const PlayBookFiles = () => {
   const router = useRouter();
@@ -19,7 +22,6 @@ const PlayBookFiles = () => {
   const [uploadProgress, setUploadProgress] = useState(null);
   const [uploadSuccess, setUploadSuccess] = useState(false);
   const [accessToken, setAccessToken] = useState(null);
-  const fileInputRef = useRef(null);
 
   // Get access token
   useEffect(() => {
@@ -51,8 +53,8 @@ const PlayBookFiles = () => {
           includeTeamDriveItems: true,
           supportsAllDrives: true,
           teamDriveId,
-          q: `mimeType!='application/vnd.google-apps.folder' and trashed = false and  '${fid}' in parents`
-        }
+          q: `mimeType!='application/vnd.google-apps.folder' and trashed = false and '${fid}' in parents`,
+        },
       });
 
       setResults(res.data.files);
@@ -103,25 +105,20 @@ const PlayBookFiles = () => {
     return `https://drive.google.com/file/d/${id}/view`;
   };
 
-  const isDownloadable = (file) => {
-    const mime = file.mimeType;
-    return !mime.startsWith("application/vnd.google-apps.") && !mime.startsWith("image/") && mime !== "application/pdf";
-  };
-
   const handleRemoveFile = async (fileId) => {
     try {
       await axios.delete(`https://www.googleapis.com/drive/v3/files/${fileId}`, {
         headers: { Authorization: `Bearer ${accessToken}` },
-        params: { supportsAllDrives: true }
+        params: { supportsAllDrives: true },
       });
       setResults(prev => prev.filter(file => file.id !== fileId));
+      message.success("File deleted.");
     } catch (err) {
-      alert("Failed to delete file.");
+      message.error("Failed to delete file.");
     }
   };
 
-  const handleFileUpload = async (event) => {
-    const file = event.target.files[0];
+  const handleFileUpload = async ({ file, onProgress, onSuccess, onError }) => {
     if (!file || fid === "null") return;
 
     const metadata = {
@@ -145,111 +142,104 @@ const PlayBookFiles = () => {
           onUploadProgress: (e) => {
             const percent = Math.round((e.loaded * 100) / e.total);
             setUploadProgress(percent);
-          }
+            onProgress({ percent });
+          },
         }
       );
 
       setUploadProgress(null);
-      fileInputRef.current.value = ""; // reset input
       await getFiles();
       setUploadSuccess(true);
+      message.success("Upload successful");
       setTimeout(() => setUploadSuccess(false), 3000);
+      onSuccess("ok");
     } catch (err) {
       setUploadProgress(null);
+      message.error("Upload failed");
       if (err.response?.status === 401) {
         handleAccessTokenExpiration();
-      } else {
-        alert("Upload failed.");
       }
+      onError(err);
     }
   };
 
-  return (
-    <div style={{ width: "100%", textAlign: "center" }}>
-      <div style={{ marginBottom: "20px" }}>
-        <button
-          onClick={() => fileInputRef.current && fileInputRef.current.click()}
-          className={styles.card}
+  const columns = [
+    {
+      title: '#',
+      render: (_text, _record, index) => index + 1,
+      width: 50,
+      align: 'center',
+    },
+    {
+      title: 'File Name',
+      dataIndex: 'name',
+      render: (text, record) => (
+        <a
+          href={getFileUrl(record)}
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={handleGoogleDriveShortcutLink}
         >
-          📁 Upload File
-        </button>
-        <input
-          type="file"
-          ref={fileInputRef}
-          style={{ display: "none" }}
-          onChange={handleFileUpload}
-        />
-      </div>
+          <span style={{ marginRight: 8 }}>{getFileIcon(record.mimeType)}</span>
+          {text}
+        </a>
+      ),
+    },
+    {
+      title: 'Action',
+      key: 'action',
+      align: 'center',
+      render: (_, record) => (
+        <Popconfirm
+          title="Are you sure to delete this file?"
+          onConfirm={() => handleRemoveFile(record.id)}
+          okText="Yes"
+          cancelText="No"
+        >
+          <Button type="primary" danger icon={<DeleteOutlined />} />
+        </Popconfirm>
+      ),
+    },
+  ];
+
+  return (
+    <div style={{ padding: '24px' }}>
+      <Upload
+        customRequest={handleFileUpload}
+        showUploadList={false}
+      >
+        <Button icon={<UploadOutlined />} type="primary">
+          Upload File
+        </Button>
+      </Upload>
 
       {uploadProgress !== null && (
-        <div style={{ marginBottom: 16 }}>
-          <label>Uploading: {uploadProgress}%</label>
-          <progress value={uploadProgress} max="100" style={{ width: '100%' }} />
+        <div style={{ marginTop: 16 }}>
+          <Progress percent={uploadProgress} />
         </div>
       )}
 
       {uploadSuccess && (
-        <div style={{ color: "green", marginBottom: 10 }}>
+        <div style={{ color: "green", marginTop: 10 }}>
           ✅ File uploaded successfully!
         </div>
       )}
 
-      {loading && <div>Loading...</div>}
-      {error && <div style={{ color: "red" }}>{error.message}</div>}
+      {error && (
+        <div style={{ color: "red", marginTop: 10 }}>
+          {error.message}
+        </div>
+      )}
 
-     
-        <table style={{ width: "100%", borderCollapse: "collapse", marginTop: "20px" }}>
-          <thead>
-            <tr style={{ backgroundColor: "#f1f1f1" }}>
-              <th style={{ padding: "10px", border: "1px solid #ddd" }}>#</th>
-              <th style={{ padding: "10px", border: "1px solid #ddd", textAlign: "left" }}>File Name</th>
-              <th style={{ padding: "10px", border: "1px solid #ddd" }}>Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            {results.map((file, index) => (
-              <tr key={file.id} style={{ backgroundColor: index % 2 === 0 ? "#fff" : "#f9f9f9" }}>
-                <td style={{ padding: "10px", border: "1px solid #ddd", textAlign: "center" }}>
-                  {index + 1}
-                </td>
-                <td style={{ padding: "10px", border: "1px solid #ddd" }}>
-                  <a
-                    href={getFileUrl(file)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    style={{ color: "#1a73e8", fontWeight: "500", textDecoration: "none" }}
-                    onClick={handleGoogleDriveShortcutLink}
-                  >
-                    <span style={{ marginRight: 8 }}>{getFileIcon(file.mimeType)}</span>
-                    {file.name}
-                  </a>
-                </td>
-                <td style={{ padding: "10px", border: "1px solid #ddd", textAlign: "center" }}>
-                  <button
-                    onClick={() => handleRemoveFile(file.id)}
-                    style={{
-                      padding: "6px 12px",
-                      backgroundColor: "#d9534f",
-                      color: "#fff",
-                      border: "none",
-                      borderRadius: "4px",
-                      cursor: "pointer"
-                    }}
-                  >
-                    ✖
-                  </button>
-                </td>
-              </tr>
-            ))}
-            {results.length === 0 && (
-              <tr>
-                <td colSpan={3} style={{ textAlign: "center", padding: "12px", color: "#777" }}>
-                  No files found.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+      <Table
+        dataSource={results}
+        rowKey="id"
+        style={{ marginTop: 24 }}
+        pagination={false}
+        columns={columns}
+        locale={{ emptyText: 'No files found.' }}
+        loading={loading}
+      />
     </div>
   );
 };

@@ -62,6 +62,8 @@ export default async function handler(req, res) {
 
     fs.writeFileSync(dbPath, JSON.stringify(tokenData, null, 2));
 
+    // Ghi chỗ này vào lại database
+
     return res.status(200).json({
       success: true,
       refreshed: true,
