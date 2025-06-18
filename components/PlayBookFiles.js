@@ -250,7 +250,6 @@ const PlayBookFiles = () => {
             )}
           </tbody>
         </table>
-      )}
     </div>
   );
 };
