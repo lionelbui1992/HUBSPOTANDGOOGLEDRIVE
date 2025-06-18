@@ -17,10 +17,11 @@ const PlayBookFiles = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [uploadProgress, setUploadProgress] = useState(null);
+  const [uploadSuccess, setUploadSuccess] = useState(false);
   const [accessToken, setAccessToken] = useState(null);
   const fileInputRef = useRef(null);
 
-  // Lấy token từ API
+  // Lấy access token
   useEffect(() => {
     const fetchToken = async () => {
       try {
@@ -34,6 +35,7 @@ const PlayBookFiles = () => {
     fetchToken();
   }, []);
 
+  // Lấy danh sách file
   const getFiles = async () => {
     if (!accessToken || fid === "null") return;
 
@@ -65,6 +67,7 @@ const PlayBookFiles = () => {
     setLoading(false);
   };
 
+  // Khi router hoặc accessToken sẵn sàng
   useEffect(() => {
     if (!router.isReady || !accessToken) return;
 
@@ -106,7 +109,7 @@ const PlayBookFiles = () => {
   };
 
   const handleRemoveFile = async (fileId) => {
-   // if (!confirm("Bạn có chắc muốn xoá file này không?")) return;
+    if (!confirm("Are you sure you want to delete this file?")) return;
     try {
       await axios.delete(`https://www.googleapis.com/drive/v3/files/${fileId}`, {
         headers: { Authorization: `Bearer ${accessToken}` },
@@ -114,52 +117,13 @@ const PlayBookFiles = () => {
       });
       setResults(prev => prev.filter(file => file.id !== fileId));
     } catch (err) {
-      alert("Lỗi khi xoá file.");
+      alert("Failed to delete file.");
     }
   };
 
-  // const ensureFolderExists = async () => {
-  //   try {
-  //     const res = await axios.get("https://www.googleapis.com/drive/v3/files", {
-  //       headers: { Authorization: `Bearer ${accessToken}` },
-  //       params: {
-  //         corpora,
-  //         includeTeamDriveItems: true,
-  //         supportsAllDrives: true,
-  //         teamDriveId,
-  //         q: `'${config.directory.root}' in parents and trashed = false and mimeType = 'application/vnd.google-apps.folder' and id = '${fid}'`
-  //       }
-  //     });
-
-  //     if (res.data.files.length === 0) {
-  //       const folderMetadata = {
-  //         name: "New Folder",
-  //         mimeType: "application/vnd.google-apps.folder",
-  //         parents: [config.directory.root]
-  //       };
-
-  //       const createRes = await axios.post(
-  //         "https://www.googleapis.com/drive/v3/files?supportsAllDrives=true",
-  //         folderMetadata,
-  //         { headers: { Authorization: `Bearer ${accessToken}` } }
-  //       );
-
-  //       return createRes.data.id;
-  //     } else {
-  //       return fid;
-  //     }
-  //   } catch (err) {
-  //     console.error("Lỗi kiểm tra/khởi tạo folder:", err);
-  //     return null;
-  //   }
-  // };
-
   const handleFileUpload = async (event) => {
     const file = event.target.files[0];
-    if (!file) return;
-
-    //const folderId = await ensureFolderExists();
-   // if (!folderId) return;
+    if (!file || fid === "null") return;
 
     const metadata = {
       name: file.name,
@@ -171,6 +135,7 @@ const PlayBookFiles = () => {
     form.append("file", file);
 
     setUploadProgress(0);
+    setUploadSuccess(false);
 
     try {
       await axios.post(
@@ -178,20 +143,24 @@ const PlayBookFiles = () => {
         form,
         {
           headers: { Authorization: `Bearer ${accessToken}` },
-          onUploadProgress: (progressEvent) => {
-            const percent = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+          onUploadProgress: (e) => {
+            const percent = Math.round((e.loaded * 100) / e.total);
             setUploadProgress(percent);
           }
         }
       );
+
       setUploadProgress(null);
-      getFiles();
+      fileInputRef.current.value = ""; // reset input
+      await getFiles();
+      setUploadSuccess(true);
+      setTimeout(() => setUploadSuccess(false), 3000);
     } catch (err) {
       setUploadProgress(null);
       if (err.response?.status === 401) {
         handleAccessTokenExpiration();
       } else {
-        alert("Upload thất bại.");
+        alert("Upload failed.");
       }
     }
   };
@@ -220,11 +189,17 @@ const PlayBookFiles = () => {
         </div>
       )}
 
+      {uploadSuccess && (
+        <div style={{ color: "green", marginBottom: 10 }}>
+          ✅ File uploaded successfully!
+        </div>
+      )}
+
       {loading && <div>Loading...</div>}
       {error && <div style={{ color: "red" }}>{error.message}</div>}
 
       {!loading && results.length === 0 ? (
-        <p>There is no files</p>
+        <p>There are no files.</p>
       ) : (
         <ul className={styles.filesContainer}>
           {results.map(file => (
